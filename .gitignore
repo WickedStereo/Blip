@@ -79,3 +79,5 @@ test_*.js
 
 # Cache
 .cache/
+
+.cursor/
