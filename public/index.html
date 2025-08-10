@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blip - Location Chat</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">
+        <span id="theme-icon">🌙</span>
+    </button>
+
+    <!-- Sound Toggle -->
+    <button class="sound-toggle" id="sound-toggle" title="Toggle sound notifications">
+        <span id="sound-icon">🔊</span>
+    </button>
+
+    <header>
+        <h1>Blip</h1>
+    </header>
+
+    <main>
+        <div class="sidebar">
+            <div id="user-info" class="card">
+                <h3>Your Profile</h3>
+                <div class="user-avatar-section">
+                    <img id="user-avatar-preview" class="avatar" src="">
+                    <div>
+                        <button id="change-avatar-btn" class="btn btn-secondary btn-sm">Change Avatar</button>
+                    </div>
+                </div>
+                
+                <div class="user-info-item">
+                    <span class="info-label">Name:</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span id="user-name" class="info-value">Loading...</span>
+                        <button id="change-name-btn" class="btn btn-secondary btn-sm">Edit</button>
+                    </div>
+                </div>
+                
+                <div class="user-info-item">
+                    <span class="info-label">User ID:</span>
+                    <span id="user-id" class="info-value">Loading...</span>
+                </div>
+                
+                <div class="user-info-item">
+                    <span class="info-label">Location:</span>
+                    <span id="geohash" class="info-value">Detecting...</span>
+                </div>
+
+                <div class="privacy-toggle-container">
+                    <label for="privacy-toggle" style="flex: 1; font-weight: 500;">Privacy Mode</label>
+                    <input type="checkbox" id="privacy-toggle">
+                </div>
+            </div>
+
+            <div id="join-room-by-id" class="card">
+                <h3>Join Room by ID</h3>
+                <div class="join-room-form">
+                    <div class="input-group">
+                        <label for="room-id-input">Room ID (Geohash)</label>
+                        <input type="text" id="room-id-input" class="form-input" placeholder="Enter 6-character room ID...">
+                    </div>
+                    <button id="join-by-id-btn" class="btn btn-primary">Join</button>
+                </div>
+            </div>
+
+            <div id="recent-rooms" class="card">
+                <h3>Recently Joined</h3>
+                <ul class="rooms-list">
+                    <!-- Recently joined rooms will be listed here -->
+                </ul>
+            </div>
+
+            <div id="nearby-rooms" class="card">
+                <h3>Nearby Chat Rooms</h3>
+                <div class="radius-control">
+                    <div class="input-group">
+                        <label for="radius-input">Search Radius</label>
+                        <input type="number" id="radius-input" class="form-input" value="5" min="1" max="50">
+                    </div>
+                    <button id="search-radius-btn" class="btn btn-primary">Search</button>
+                </div>
+                <ul class="rooms-list">
+                    <!-- Chat rooms will be listed here -->
+                </ul>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div id="chat-room" class="card">
+                <div class="chat-header">
+                    <h2 class="chat-title">Select a Chat Room</h2>
+                    <div id="user-count">0 online</div>
+                </div>
+                
+                <div id="messages">
+                    <div class="spinner-container">
+                        <div class="spinner"></div>
+                    </div>
+                    <!-- Messages will be displayed here -->
+                </div>
+                
+                <div id="typing-indicator"></div>
+                
+                <div id="reply-context" style="display: none;">
+                    <span id="reply-context-text"></span>
+                    <button id="cancel-reply-btn">×</button>
+                </div>
+                
+                <div id="message-input">
+                    <button id="emoji-btn" title="Add emoji">😊</button>
+                    <textarea id="new-message" class="form-input" placeholder="Type a message..." rows="1"></textarea>
+                    <button id="send-button" class="btn btn-primary">Send</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="libs/ngeohash.js" defer></script>
+    <script src="libs/emoji-picker-simple.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js" defer></script>
+    <script src="script.js" defer></script>
+</body>
+</html>
