@@ -1,8 +1,8 @@
-# 🌍 Blip - Location-Based Anonymous Chat
+# 🌍 Blipz - Location-Based Anonymous Chat
 
-**Blip** is a privacy-focused, location-based group chat application that allows users to discover and join chat rooms based on their approximate geographical location without requiring sign-up or personal information.
+**Blipz** is a privacy-focused, location-based group chat application that allows users to discover and join chat rooms based on their approximate geographical location without requiring sign-up or personal information.
 
-![Blip Screenshot](https://via.placeholder.com/800x400/2563eb/ffffff?text=Blip+Chat+Interface)
+![Blipz Screenshot](https://via.placeholder.com/800x400/2563eb/ffffff?text=Blipz+Chat+Interface)
 
 ## ✨ Features
 
@@ -42,8 +42,8 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/blip.git
-   cd blip
+   git clone https://github.com/your-username/blipz.git
+   cd blipz
    ```
 
 2. **Configure Firebase**
@@ -82,7 +82,7 @@
 ## 🏗️ Project Structure
 
 ```
-blip/
+blipz/
 ├── public/                 # Frontend files
 │   ├── index.html         # Main HTML file
 │   ├── script.js          # Core application logic
@@ -172,8 +172,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-- **Issues**: Report bugs and request features via [GitHub Issues](https://github.com/your-username/blip/issues)
-- **Discussions**: Join conversations in [GitHub Discussions](https://github.com/your-username/blip/discussions)
+- **Issues**: Report bugs and request features via [GitHub Issues](https://github.com/your-username/blipz/issues)
+- **Discussions**: Join conversations in [GitHub Discussions](https://github.com/your-username/blipz/discussions)
 - **Documentation**: Check the [docs/](docs/) directory for detailed documentation
 
 ## 🙏 Acknowledgments

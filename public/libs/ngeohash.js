@@ -1,4 +1,4 @@
-// Simple ngeohash implementation for Blip
+// Simple ngeohash implementation for Blipz
 // Based on the original ngeohash algorithm
 
 (function(global) {

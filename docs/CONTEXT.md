@@ -1,10 +1,10 @@
-# Blip Project Context & Status
+# Blipz Project Context & Status
 
-This document summarizes the current state of the "Blip" application, its features, and the next steps.
+This document summarizes the current state of the "Blipz" application, its features, and the next steps.
 
 ## Project Overview
 
-Blip is a privacy-focused, location-based group chat web application. It allows users to join chat rooms based on their approximate geographical location without needing to sign up or log in. The core technology stack is vanilla JavaScript for the client-side and Firebase for the backend (Authentication, Firestore, Cloud Functions).
+Blipz is a privacy-focused, location-based group chat web application. It allows users to join chat rooms based on their approximate geographical location without needing to sign up or log in. The core technology stack is vanilla JavaScript for the client-side and Firebase for the backend (Authentication, Firestore, Cloud Functions).
 
 The fundamental unit of location is a **6-character geohash**, representing a fixed, "neighborhood-sized" area (approx. 1.2km x 0.6km). Each unique geohash can have only one chat room associated with it.
 
@@ -81,7 +81,7 @@ The user has requested a significant refactor of the room discovery mechanism an
 
 ## ✅ MAJOR UI OVERHAUL COMPLETED (Latest Update)
 
-**Goal:** Transform Blip into a modern, feature-rich chat application with enhanced user experience.
+**Goal:** Transform Blipz into a modern, feature-rich chat application with enhanced user experience.
 
 **What Was Accomplished:**
 
@@ -202,7 +202,7 @@ The user has requested a significant refactor of the room discovery mechanism an
 
 ### 📁 Final Project Structure
 ```
-blip/
+blipz/
 ├── README.md              # Comprehensive project documentation
 ├── LICENSE                # MIT license
 ├── .gitignore            # Git ignore rules

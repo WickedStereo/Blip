@@ -1,4 +1,4 @@
-// Simple emoji picker implementation for Blip
+// Simple emoji picker implementation for Blipz
 (function(global) {
     'use strict';
 
