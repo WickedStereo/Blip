@@ -4,13 +4,38 @@ Blipz is a privacy-focused, location-based group chat web application built with
 
 **Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
 
+## Quick Commands Reference
+
+### Essential Commands (Copy-Paste Ready)
+```bash
+# Install Firebase CLI (15-20 minutes - NEVER CANCEL)
+npm install -g firebase-tools
+
+# Setup Functions Dependencies (51 seconds)
+cd functions && npm install
+
+# Serve App Locally (1-2 minutes startup)
+firebase serve --only hosting
+
+# Alternative Static Server (instant)
+cd public && python3 -m http.server 8000
+
+# Fix Function Linting (auto-fixes 89/94 errors)
+cd functions && npm run lint -- --fix
+
+# Start Full Emulators (3-5 minutes - NEVER CANCEL)
+firebase emulators:start
+```
+
 ## Working Effectively
 
 ### Prerequisites and Setup
-- **CRITICAL**: Firebase CLI installation takes 10-15 minutes. NEVER CANCEL. Set timeout to 20+ minutes.
+- **CRITICAL**: Firebase CLI installation takes 15+ minutes. NEVER CANCEL. Set timeout to 30+ minutes.
   ```bash
   npm install -g firebase-tools
   ```
+  - **TIMING**: Installation consistently takes 15-20 minutes due to large dependency tree
+  - **NETWORK**: May fail in restricted environments - use fallback below
   - Alternative if npm install fails: Use Python HTTP server for static file serving
   ```bash
   cd public && python3 -m http.server 8000
@@ -45,7 +70,13 @@ Blipz is a privacy-focused, location-based group chat web application built with
   ```
   - **EXPECTED**: Currently fails with 94 style errors (Google style guide violations)
   - Functions use 4-space indentation but Google style requires 2-space
-  - Run `npm run lint -- --fix` to auto-fix most issues
+  - Issues: object-curly-spacing, indent, max-len, arrow-parens, quotes, require-jsdoc
+  - Run `npm run lint -- --fix` to auto-fix most issues (89 of 94 errors)
+
+- **Fix Linting Issues**:
+  ```bash
+  cd functions && npm run lint -- --fix
+  ```
 
 ### Deployment
 - **Deploy Functions**:
@@ -93,23 +124,32 @@ firebase.json          # Firebase configuration
    - Accept location permissions when prompted
    - Verify geohash room creation/joining works
    - Send test messages and verify real-time delivery
+   - Test with multiple browser tabs for multi-user simulation
 
 2. **UI Features**:
    - Test dark/light theme toggle (top-right moon/sun icon)
    - Test sound notification toggle (speaker icon)
    - Test emoji picker (click emoji button in message input)
    - Test message reactions (hover over messages, click reaction buttons)
+   - Verify recently joined rooms list updates correctly
 
 3. **Location Privacy**:
-   - Verify GPS coordinates never leave device (check Network tab)
+   - Verify GPS coordinates never leave device (check Network tab in DevTools)
    - Confirm only geohash approximations are sent to Firebase
-   - Test radius-based room discovery
+   - Test radius-based room discovery (enter km value, click search)
+   - Verify "Join by ID" functionality with manual geohash entry
 
 4. **Real-time Features**:
    - Open multiple browser tabs to test multi-user chat
-   - Verify typing indicators appear/disappear
+   - Verify typing indicators appear/disappear correctly
    - Test user count updates in real-time
    - Verify message reactions sync across users
+   - Test notification sounds (ensure browser allows audio)
+
+5. **Error Handling**:
+   - Test without location permissions (should show error)
+   - Test with network disconnection (should handle gracefully)
+   - Test invalid geohash inputs in "Join by ID"
 
 ### Build Validation
 - **No Traditional Build System**: Frontend uses vanilla HTML/CSS/JS - no compilation needed
@@ -119,14 +159,22 @@ firebase.json          # Firebase configuration
 ## Common Tasks and Troubleshooting
 
 ### Firebase CLI Issues
-- **Installation Timeout**: Firebase CLI takes 10-15 minutes to install globally
+- **Installation Timeout**: Firebase CLI takes 15-20 minutes to install globally
+- **Large Dependencies**: 500+ packages including native modules (re2, node-gyp)
 - **Network Issues**: If npm install fails, try `python3 -m http.server 8000` in public/ as fallback
 - **Emulator Startup**: Allow 3-5 minutes for full emulator suite to start
+- **Version Check**: After installation, verify with `firebase --version`
 
 ### Functions Development
 - **Node Version**: Functions specify Node.js v22 but v20 works with warnings
-- **Linting Errors**: Currently 94 style errors due to indentation (4-space vs 2-space)
+- **Linting Errors**: Currently 94 style errors due to Google style guide violations:
+  - 4-space indentation vs required 2-space
+  - Missing JSDoc comments
+  - Object curly spacing issues
+  - Arrow function parentheses requirements
+  - String quote style (single vs double quotes)
 - **Testing Functions**: Use `firebase functions:shell` for local function testing
+- **Auto-fix Linting**: `npm run lint -- --fix` resolves 89 of 94 errors automatically
 
 ### Frontend Development
 - **No Build Step**: Direct file editing, refresh browser to test
@@ -154,11 +202,12 @@ firebase.json          # Firebase configuration
 ## Important Notes
 
 ### Timing Expectations
-- **NEVER CANCEL**: Firebase CLI installation (10-15 minutes)
+- **NEVER CANCEL**: Firebase CLI installation (15-20 minutes)
 - **NEVER CANCEL**: Emulator startup (3-5 minutes)  
 - **NEVER CANCEL**: Firebase serve startup (1-2 minutes)
-- Functions npm install: ~51 seconds
-- Functions linting: <1 second
+- Functions npm install: ~51 seconds (with Node.js version warnings)
+- Functions linting: <1 second (94 errors expected)
+- Python HTTP server startup: <1 second (instant fallback)
 
 ### Firebase Project Requirements
 - Firestore Database enabled
