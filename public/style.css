@@ -286,6 +286,16 @@ main {
     color: var(--text-secondary);
 }
 
+.shortcut-hint {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--radius-sm);
+    margin-left: 0.5rem;
+}
+
 .form-input {
     padding: 0.75rem;
     border: 1px solid var(--border-color);
@@ -982,4 +992,127 @@ main {
         flex-direction: column;
         gap: 0.5rem;
     }
+}
+
+/* ===========================================
+   TWO-LEVEL NAVIGATION SYSTEM
+   =========================================== */
+
+/* Navigation states */
+.app-state-main .chat-container {
+    display: none;
+}
+
+.app-state-chat .sidebar {
+    display: none;
+}
+
+.app-state-chat main {
+    grid-template-columns: 1fr;
+    grid-template-areas: "chat";
+}
+
+/* Back button for navigation */
+.back-button {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.back-button:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.back-button:active {
+    transform: translateY(0);
+}
+
+/* Chat state adjustments */
+.app-state-chat .chat-container {
+    position: relative;
+}
+
+/* Smooth transitions for navigation */
+.sidebar, .chat-container {
+    transition: opacity 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+                visibility 0.4s;
+}
+
+/* Enhanced transitions with scale effect */
+.app-state-transitioning .sidebar,
+.app-state-transitioning .chat-container {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+}
+
+/* Ensure proper visibility handling */
+.app-state-main .chat-container {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.98);
+    transition-delay: 0.1s;
+}
+
+.app-state-chat .sidebar {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-30px) scale(0.95);
+    transition-delay: 0.1s;
+}
+
+/* Smooth appearance animations */
+.app-state-main .sidebar {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.app-state-chat .chat-container {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+/* Mobile responsive navigation */
+@media (max-width: 768px) {
+    .app-state-main main,
+    .app-state-chat main {
+        grid-template-columns: 1fr;
+        grid-template-areas: "content";
+    }
+    
+    .app-state-main .sidebar {
+        grid-area: content;
+    }
+    
+    .app-state-main .chat-container {
+        display: none;
+    }
+    
+    .app-state-chat .chat-container {
+        grid-area: content;
+    }
+    
+    .app-state-chat .sidebar {
+        display: none;
+    }
+}
 }
