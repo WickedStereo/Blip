@@ -14,7 +14,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// 3. DOM Elements
+// 3. DOM Elements - Safe element selection with null checks
 const userIdElement = document.getElementById('user-id');
 const geohashElement = document.getElementById('geohash');
 const privacyToggle = document.getElementById('privacy-toggle');
@@ -23,6 +23,15 @@ const themeToggle = document.getElementById('theme-toggle');
 const themeIcon = document.getElementById('theme-icon');
 const soundToggle = document.getElementById('sound-toggle');
 const soundIcon = document.getElementById('sound-icon');
+
+// Helper function for safe DOM element access
+function safeGetElement(id) {
+    const element = document.getElementById(id);
+    if (!element) {
+        console.warn(`Element with id '${id}' not found`);
+    }
+    return element;
+}
 
 let activeChatRoom = null;
 let messageUnsubscribe = null; // To keep track of the active listener
@@ -50,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAutoResizeTextarea();
     setupRecentlyJoinedRooms();
     setupNotificationSystem();
+    setupBackButton();
 });
 
 // Recently Joined Rooms Management
@@ -224,6 +234,11 @@ function initializeTheme() {
 }
 
 function setupThemeToggle() {
+    if (!themeToggle) {
+        console.warn('Theme toggle button not found');
+        return;
+    }
+    
     themeToggle.addEventListener('click', () => {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -235,11 +250,18 @@ function setupThemeToggle() {
 }
 
 function updateThemeIcon(theme) {
-    themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    if (themeIcon) {
+        themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
 }
 
 // Sound Management
 function setupSoundToggle() {
+    if (!soundToggle) {
+        console.warn('Sound toggle button not found');
+        return;
+    }
+    
     const soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
     updateSoundIcon(soundEnabled);
     
@@ -336,18 +358,26 @@ function showBrowserNotification(title, body) {
 
 // Auto-resize textarea
 function setupAutoResizeTextarea() {
-    const textarea = document.getElementById('new-message');
+    const textarea = safeGetElement('new-message');
+    
+    if (!textarea) {
+        console.error('Message textarea not found');
+        return;
+    }
     
     textarea.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 96) + 'px'; // Max 6rem (96px)
     });
     
-    // Reset height when message is sent
+    // Reset height when message is sent - this is now handled in setupMessageSending
     textarea.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            document.getElementById('send-button').click();
+            const sendButton = safeGetElement('send-button');
+            if (sendButton) {
+                sendButton.click();
+            }
             this.style.height = 'auto';
         }
     });
@@ -481,44 +511,69 @@ async function ensureUserProfile(user) {
 }
 
 function setupEmojiPicker() {
-    const emojiBtn = document.getElementById('emoji-btn');
-    const messageInput = document.getElementById('new-message');
+    const emojiBtn = safeGetElement('emoji-btn');
+    const messageInput = safeGetElement('new-message');
+    
+    if (!emojiBtn || !messageInput) {
+        console.warn('Emoji picker elements not found');
+        return;
+    }
+    
     const picker = document.createElement('emoji-picker');
-
-    picker.style.position = 'absolute';
+    picker.style.position = 'fixed';
     picker.style.zIndex = '1000';
     picker.style.display = 'none';
+    picker.style.boxShadow = 'var(--shadow-xl)';
+    picker.style.borderRadius = 'var(--radius-lg)';
     document.body.appendChild(picker);
 
     emojiBtn.addEventListener('click', (event) => {
         event.stopPropagation();
         
         if (picker.style.display === 'none') {
-            // Position picker relative to the emoji button
-            const btnRect = emojiBtn.getBoundingClientRect();
+            // Position picker relative to the message input container
+            const messageInputContainer = emojiBtn.closest('#message-input');
+            const containerRect = messageInputContainer.getBoundingClientRect();
             const pickerWidth = 320;
             const pickerHeight = 350;
             
-            // Calculate position to keep picker in viewport
-            let left = btnRect.left;
-            let top = btnRect.top - pickerHeight - 10;
+            // Position above the message input with better spacing
+            let left = containerRect.left;
+            let top = containerRect.top - pickerHeight - 15;
             
-            // Adjust if picker would go off screen
-            if (left + pickerWidth > window.innerWidth) {
+            // Adjust horizontal position to keep picker in viewport
+            if (left + pickerWidth > window.innerWidth - 10) {
                 left = window.innerWidth - pickerWidth - 10;
             }
             if (left < 10) {
                 left = 10;
             }
+            
+            // If picker would go above viewport, position below instead
             if (top < 10) {
-                top = btnRect.bottom + 10;
+                top = containerRect.bottom + 15;
             }
             
             picker.style.left = left + 'px';
             picker.style.top = top + 'px';
             picker.style.display = 'block';
+            
+            // Add entrance animation
+            picker.style.opacity = '0';
+            picker.style.transform = 'scale(0.95) translateY(10px)';
+            requestAnimationFrame(() => {
+                picker.style.transition = 'all 0.2s ease-out';
+                picker.style.opacity = '1';
+                picker.style.transform = 'scale(1) translateY(0)';
+            });
         } else {
-            picker.style.display = 'none';
+            // Add exit animation
+            picker.style.transition = 'all 0.15s ease-in';
+            picker.style.opacity = '0';
+            picker.style.transform = 'scale(0.95) translateY(10px)';
+            setTimeout(() => {
+                picker.style.display = 'none';
+            }, 150);
         }
     });
 
@@ -527,6 +582,9 @@ function setupEmojiPicker() {
         // Focus back to input and trigger resize
         messageInput.focus();
         messageInput.dispatchEvent(new Event('input'));
+        
+        // Hide picker after selection
+        picker.style.display = 'none';
     });
 
     document.addEventListener('click', (event) => {
@@ -535,9 +593,73 @@ function setupEmojiPicker() {
         }
     });
 
-    // Hide picker when scrolling
+    // Hide picker when scrolling or resizing
     window.addEventListener('scroll', () => {
         picker.style.display = 'none';
+    });
+    
+    window.addEventListener('resize', () => {
+        picker.style.display = 'none';
+    });
+}
+
+// Back Button Functionality
+function setupBackButton() {
+    const backButton = safeGetElement('back-to-rooms-btn');
+    
+    if (!backButton) {
+        console.warn('Back button not found');
+        return;
+    }
+    
+    backButton.addEventListener('click', () => {
+        // Reset active chat room
+        if (messageUnsubscribe) {
+            messageUnsubscribe();
+            messageUnsubscribe = null;
+        }
+        if (presenceUnsubscribe) {
+            presenceUnsubscribe();
+            presenceUnsubscribe = null;
+        }
+        if (presenceInterval) {
+            clearInterval(presenceInterval);
+            presenceInterval = null;
+        }
+        
+        activeChatRoom = null;
+        
+        // Reset UI
+        const chatTitle = document.querySelector('.chat-title');
+        if (chatTitle) {
+            chatTitle.textContent = 'Select a Chat Room';
+        }
+        
+        backButton.style.display = 'none';
+        
+        // Clear messages
+        const messagesDiv = safeGetElement('messages');
+        if (messagesDiv) {
+            messagesDiv.innerHTML = '<div class="empty-state"><p>Select a room to start chatting</p></div>';
+        }
+        
+        // Clear typing indicator
+        const typingIndicator = safeGetElement('typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.textContent = '';
+        }
+        
+        // Reset user count
+        updateUserCount(0);
+        
+        // Clear reply context
+        const replyContext = safeGetElement('reply-context');
+        if (replyContext) {
+            replyContext.style.display = 'none';
+        }
+        replyToMessage = null;
+        
+        showNotification('Left chat room', 'info');
     });
 }
 
@@ -591,27 +713,44 @@ function setupLocationListener() {
 }
 
 function setupMessageSending() {
-    const sendButton = document.getElementById('send-button');
-    const messageInput = document.getElementById('new-message');
+    const sendButton = safeGetElement('send-button');
+    const messageInput = safeGetElement('new-message');
 
-    sendButton.addEventListener('click', () => {
-        const text = messageInput.value.trim();
+    if (!sendButton || !messageInput) {
+        console.error('Message sending elements not found');
+        return;
+    }
+
+    // Remove existing listeners to prevent duplicates
+    sendButton.replaceWith(sendButton.cloneNode(true));
+    messageInput.replaceWith(messageInput.cloneNode(true));
+    
+    // Get fresh references after cloning
+    const newSendButton = safeGetElement('send-button');
+    const newMessageInput = safeGetElement('new-message');
+
+    newSendButton.addEventListener('click', () => {
+        const text = newMessageInput.value.trim();
         if (text && activeChatRoom) {
             sendMessage(activeChatRoom, text);
-            messageInput.value = ''; // Clear input field
+            newMessageInput.value = ''; // Clear input field
+            newMessageInput.style.height = 'auto'; // Reset height
             updateTypingStatus(false); // User is no longer typing
+        } else if (!activeChatRoom) {
+            showNotification('Please select a chat room first.', 'warning');
         }
     });
 
-    messageInput.addEventListener('keypress', (e) => {
+    newMessageInput.addEventListener('keypress', (e) => {
         updateTypingStatus(true);
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(() => {
             updateTypingStatus(false);
         }, 3000); // User is considered "not typing" after 3 seconds of inactivity
 
-        if (e.key === 'Enter') {
-            sendButton.click();
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            newSendButton.click();
         }
     });
 }
@@ -631,26 +770,44 @@ function sendMessage(geohash, text) {
     const user = auth.currentUser;
     if (!user) {
         console.error("No user signed in to send message.");
+        showNotification('You must be signed in to send messages.', 'error');
+        return;
+    }
+
+    // Validate message text
+    if (!text || text.trim().length === 0) {
+        showNotification('Message cannot be empty.', 'error');
+        return;
+    }
+
+    if (text.length > 300) {
+        showNotification('Message is too long. Maximum 300 characters.', 'error');
         return;
     }
 
     const messageData = {
-        text: text,
+        text: text.trim(),
         senderId: user.uid,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     if (replyToMessage) {
         messageData.replyTo = replyToMessage.id;
-        messageData.replyToText = replyToMessage.text; // Store a snippet for context
+        messageData.replyToText = replyToMessage.text.substring(0, 100); // Limit reply text length
     }
 
     const messagesRef = db.collection('chatRooms').doc(geohash).collection('messages');
-    messagesRef.add(messageData);
+    messagesRef.add(messageData).catch(error => {
+        console.error('Error sending message:', error);
+        showNotification('Failed to send message. Please try again.', 'error');
+    });
 
     // Reset reply state
     replyToMessage = null;
-    document.getElementById('reply-context').style.display = 'none';
+    const replyContext = safeGetElement('reply-context');
+    if (replyContext) {
+        replyContext.style.display = 'none';
+    }
 }
 
 function setupRoomSelectionListener() {
@@ -693,7 +850,16 @@ async function selectChatRoom(geohash) {
     addToRecentlyJoinedRooms(geohash);
     
     // Update the UI to show which room is selected
-    document.querySelector('.chat-title').textContent = `Room: ${activeChatRoom}`;
+    const chatTitle = document.querySelector('.chat-title');
+    const backButton = safeGetElement('back-to-rooms-btn');
+    
+    if (chatTitle) {
+        chatTitle.textContent = `Room: ${activeChatRoom}`;
+    }
+    
+    if (backButton) {
+        backButton.style.display = 'flex';
+    }
     
     // Show notification
     showNotification(`Joined room ${geohash}`, 'success');
@@ -776,14 +942,14 @@ function updatePresence() {
 }
 
 function updateUserCount(count) {
-    const userCountElement = document.getElementById('user-count');
+    const userCountElement = safeGetElement('user-count');
     if (userCountElement) {
         userCountElement.textContent = `(${count} online)`;
     }
 }
 
 function displayTypingIndicator(typingUsers) {
-    const indicator = document.getElementById('typing-indicator');
+    const indicator = safeGetElement('typing-indicator');
     if (indicator) {
         if (typingUsers.length === 0) {
             indicator.textContent = '';
@@ -966,7 +1132,30 @@ function getAndGeohashLocation() {
 
         }, error => {
             console.error("Geolocation error:", error);
-            geohashElement.textContent = 'Unavailable';
+            let errorMessage = 'Location unavailable';
+            let userMessage = '';
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = 'Location denied';
+                    userMessage = 'Please enable location access in your browser settings to discover nearby rooms.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = 'Location unavailable';
+                    userMessage = 'Your location could not be determined. Please check your internet connection.';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = 'Location timeout';
+                    userMessage = 'Location request timed out. Please try refreshing the page.';
+                    break;
+                default:
+                    userMessage = 'Unable to access location. You can still join rooms by ID.';
+            }
+            
+            if (geohashElement) {
+                geohashElement.textContent = errorMessage;
+            }
+            showNotification(userMessage, 'error', 5000);
         }, {
             enableHighAccuracy: false, // We don't need high accuracy
             timeout: 10000,
