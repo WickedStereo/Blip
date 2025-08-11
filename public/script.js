@@ -9,10 +9,22 @@ const firebaseConfig = {
     measurementId: "G-J2V4RT6XHN"
 };
 
-// 2. Initialize Firebase and Services
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+// 2. Initialize Firebase and Services (with error handling)
+let auth, db;
+try {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+} catch (error) {
+    console.log('Firebase not available:', error.message);
+    // Create mock objects to prevent errors
+    auth = { currentUser: null };
+    db = { collection: () => ({ doc: () => ({ get: () => Promise.resolve({ exists: false }) }) }) };
+}
+
+// Navigation state management
+let currentNavState = 'main'; // 'main' or 'chat'
+let isTransitioning = false;
 
 // 3. DOM Elements
 const userIdElement = document.getElementById('user-id');
@@ -32,10 +44,10 @@ let replyToMessage = null; // To keep track of the message being replied to
 let presenceInterval = null;
 let lastKnownPosition = null;
 
-
 // 5. Core App Logic
 document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
+    initializeNavigation();
     handleAnonymousAuth();
     setupLocationListener();
     setupRoomSelectionListener();
@@ -141,6 +153,115 @@ function setupRecentlyJoinedRooms() {
     // This will be called when DOM is ready
     updateRecentlyJoinedRoomsDisplay();
 }
+
+// ===========================================
+// TWO-LEVEL NAVIGATION SYSTEM
+// ===========================================
+
+function initializeNavigation() {
+    // Set initial navigation state to main
+    setNavigationState('main');
+    
+    // Set up body class for initial state
+    document.body.className = 'app-state-main';
+}
+
+function setNavigationState(state, options = {}) {
+    if (isTransitioning) return;
+    
+    const validStates = ['main', 'chat'];
+    if (!validStates.includes(state)) {
+        console.error('Invalid navigation state:', state);
+        return;
+    }
+    
+    if (currentNavState === state) return;
+    
+    isTransitioning = true;
+    
+    // Add transitioning class for smooth animations
+    document.body.classList.add('app-state-transitioning');
+    
+    setTimeout(() => {
+        // Update state
+        currentNavState = state;
+        
+        // Update body classes
+        document.body.className = `app-state-${state}`;
+        
+        // Handle back button
+        handleBackButton();
+        
+        // Update chat title if entering chat state
+        if (state === 'chat' && options.roomId) {
+            updateChatTitle(options.roomId);
+        }
+        
+        // Complete transition after allowing CSS animations to complete
+        setTimeout(() => {
+            isTransitioning = false;
+        }, 200);
+        
+        // Show notification if provided
+        if (options.notification) {
+            showNotification(options.notification.message, options.notification.type || 'info');
+        }
+    }, 200); // Increased timing for better visual effect
+}
+
+function handleBackButton() {
+    // Remove existing back button
+    const existingBackBtn = document.querySelector('.back-button');
+    if (existingBackBtn) {
+        existingBackBtn.remove();
+    }
+    
+    // Add back button only in chat state
+    if (currentNavState === 'chat') {
+        const backButton = document.createElement('button');
+        backButton.className = 'back-button';
+        backButton.innerHTML = '← Back to Rooms';
+        
+        backButton.addEventListener('click', () => {
+            navigateToMain();
+        });
+        
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+            chatContainer.appendChild(backButton);
+        }
+    }
+}
+
+function navigateToMain() {
+    setNavigationState('main', {
+        notification: {
+            message: 'Returned to room selection',
+            type: 'info'
+        }
+    });
+}
+
+function navigateToChat(roomId, roomLabel) {
+    setNavigationState('chat', {
+        roomId: roomId,
+        notification: {
+            message: `Joined room: ${roomLabel || roomId}`,
+            type: 'success'
+        }
+    });
+}
+
+function updateChatTitle(roomId) {
+    const chatTitle = document.querySelector('.chat-title');
+    if (chatTitle) {
+        chatTitle.textContent = `Chat Room: ${roomId}`;
+    }
+}
+
+// ===========================================
+// END NAVIGATION SYSTEM
+// ===========================================
 
 // Message Reactions
 function addReactionToMessage(messageId, reaction) {
@@ -354,6 +475,12 @@ function setupAutoResizeTextarea() {
 }
 
 function handleAnonymousAuth() {
+    // Skip Firebase auth if not available
+    if (!auth.onAuthStateChanged) {
+        console.log('Firebase auth not available, skipping authentication');
+        return;
+    }
+    
     auth.onAuthStateChanged(async user => {
         if (user) {
             // User is signed in anonymously.
@@ -454,6 +581,14 @@ function setupJoinByIdListener() {
     joinBtn.addEventListener('click', () => {
         const roomId = input.value.trim();
         if (roomId) {
+            // For testing navigation without Firebase
+            if (typeof firebase === 'undefined') {
+                // Test navigation directly
+                navigateToChat(roomId, `Test Room ${roomId}`);
+                input.value = '';
+                return;
+            }
+            
             selectChatRoom(roomId);
             input.value = '';
         }
@@ -692,11 +827,8 @@ async function selectChatRoom(geohash) {
     // Add to recently joined rooms
     addToRecentlyJoinedRooms(geohash);
     
-    // Update the UI to show which room is selected
-    document.querySelector('.chat-title').textContent = `Room: ${activeChatRoom}`;
-    
-    // Show notification
-    showNotification(`Joined room ${geohash}`, 'success');
+    // Navigate to chat state with room information
+    navigateToChat(geohash, `Room ${geohash}`);
 
     const messagesDiv = document.getElementById('messages');
     const spinner = document.querySelector('.spinner-container');
