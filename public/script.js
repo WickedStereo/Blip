@@ -221,25 +221,16 @@ function setNavigationState(state, options = {}) {
 }
 
 function handleBackButton() {
-    // Remove existing back button
-    const existingBackBtn = document.querySelector('.back-button');
-    if (existingBackBtn) {
-        existingBackBtn.remove();
-    }
+    // Use our existing back button in the header instead of creating a new one
+    const backButton = safeGetElement('back-to-rooms-btn');
     
-    // Add back button only in chat state
-    if (currentNavState === 'chat') {
-        const backButton = document.createElement('button');
-        backButton.className = 'back-button';
-        backButton.innerHTML = '← Back to Rooms';
-        
-        backButton.addEventListener('click', () => {
-            navigateToMain();
-        });
-        
-        const chatContainer = document.querySelector('.chat-container');
-        if (chatContainer) {
-            chatContainer.appendChild(backButton);
+    if (backButton) {
+        if (currentNavState === 'chat') {
+            // Show our header back button
+            backButton.style.display = 'flex';
+        } else {
+            // Hide our header back button
+            backButton.style.display = 'none';
         }
     }
 }
@@ -828,8 +819,7 @@ function setupBackButton() {
         activeChatRoom = null;
         replyToMessage = null;
         
-        // Hide back button and use navigation system
-        backButton.style.display = 'none';
+        // Use navigation system to return to main
         navigateToMain();
     });
 }
@@ -1020,14 +1010,8 @@ async function selectChatRoom(geohash) {
     // Add to recently joined rooms
     addToRecentlyJoinedRooms(geohash);
     
-    // Navigate to chat state with room information and show back button
+    // Navigate to chat state with room information
     navigateToChat(geohash, `Room ${geohash}`);
-    
-    // Show our enhanced back button
-    const backButton = safeGetElement('back-to-rooms-btn');
-    if (backButton) {
-        backButton.style.display = 'flex';
-    }
 
     const messagesDiv = document.getElementById('messages');
     const spinner = document.querySelector('.spinner-container');
