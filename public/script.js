@@ -9,10 +9,22 @@ const firebaseConfig = {
     measurementId: "G-J2V4RT6XHN"
 };
 
-// 2. Initialize Firebase and Services
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+// 2. Initialize Firebase and Services (with error handling)
+let auth, db;
+try {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+} catch (error) {
+    console.log('Firebase not available:', error.message);
+    // Create mock objects to prevent errors
+    auth = { currentUser: null };
+    db = { collection: () => ({ doc: () => ({ get: () => Promise.resolve({ exists: false }) }) }) };
+}
+
+// Navigation state management
+let currentNavState = 'main'; // 'main' or 'chat'
+let isTransitioning = false;
 
 // 3. DOM Elements - Safe element selection with null checks
 const userIdElement = document.getElementById('user-id');
@@ -41,10 +53,10 @@ let replyToMessage = null; // To keep track of the message being replied to
 let presenceInterval = null;
 let lastKnownPosition = null;
 
-
 // 5. Core App Logic
 document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
+    initializeNavigation();
     handleAnonymousAuth();
     setupLocationListener();
     setupRoomSelectionListener();
@@ -59,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAutoResizeTextarea();
     setupRecentlyJoinedRooms();
     setupNotificationSystem();
+    setupKeyboardShortcuts();
     setupBackButton();
 });
 
@@ -151,6 +164,177 @@ function setupRecentlyJoinedRooms() {
     // This will be called when DOM is ready
     updateRecentlyJoinedRoomsDisplay();
 }
+
+// ===========================================
+// TWO-LEVEL NAVIGATION SYSTEM
+// ===========================================
+
+function initializeNavigation() {
+    // Set initial navigation state to main
+    setNavigationState('main');
+    
+    // Set up body class for initial state
+    document.body.className = 'app-state-main';
+}
+
+function setNavigationState(state, options = {}) {
+    if (isTransitioning) return;
+    
+    const validStates = ['main', 'chat'];
+    if (!validStates.includes(state)) {
+        console.error('Invalid navigation state:', state);
+        return;
+    }
+    
+    if (currentNavState === state) return;
+    
+    isTransitioning = true;
+    
+    // Add transitioning class for smooth animations
+    document.body.classList.add('app-state-transitioning');
+    
+    setTimeout(() => {
+        // Update state
+        currentNavState = state;
+        
+        // Update body classes
+        document.body.className = `app-state-${state}`;
+        
+        // Handle back button
+        handleBackButton();
+        
+        // Update chat title if entering chat state
+        if (state === 'chat' && options.roomId) {
+            updateChatTitle(options.roomId);
+        }
+        
+        // Complete transition after allowing CSS animations to complete
+        setTimeout(() => {
+            isTransitioning = false;
+        }, 200);
+        
+        // Show notification if provided
+        if (options.notification) {
+            showNotification(options.notification.message, options.notification.type || 'info');
+        }
+    }, 200); // Increased timing for better visual effect
+}
+
+function handleBackButton() {
+    // Remove existing back button
+    const existingBackBtn = document.querySelector('.back-button');
+    if (existingBackBtn) {
+        existingBackBtn.remove();
+    }
+    
+    // Add back button only in chat state
+    if (currentNavState === 'chat') {
+        const backButton = document.createElement('button');
+        backButton.className = 'back-button';
+        backButton.innerHTML = '← Back to Rooms';
+        
+        backButton.addEventListener('click', () => {
+            navigateToMain();
+        });
+        
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+            chatContainer.appendChild(backButton);
+        }
+    }
+}
+
+function navigateToMain() {
+    setNavigationState('main', {
+        notification: {
+            message: 'Returned to room selection',
+            type: 'info'
+        }
+    });
+}
+
+function navigateToChat(roomId, roomLabel) {
+    setNavigationState('chat', {
+        roomId: roomId,
+        notification: {
+            message: `Joined room: ${roomLabel || roomId}`,
+            type: 'success'
+        }
+    });
+}
+
+function updateChatTitle(roomId) {
+    const chatTitle = document.querySelector('.chat-title');
+    if (chatTitle) {
+        chatTitle.textContent = `Chat Room: ${roomId}`;
+    }
+}
+
+// Keyboard shortcuts for enhanced navigation
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (event) => {
+        // Only handle shortcuts when not typing in input fields
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+            // Handle Enter key in room ID input
+            if (event.key === 'Enter' && event.target.id === 'room-id-input') {
+                event.preventDefault();
+                const joinBtn = document.getElementById('join-by-id-btn');
+                if (joinBtn) joinBtn.click();
+            }
+            return;
+        }
+        
+        // Global keyboard shortcuts
+        switch (event.key) {
+            case 'Escape':
+                // ESC key to go back to main from chat
+                if (currentNavState === 'chat') {
+                    event.preventDefault();
+                    navigateToMain();
+                }
+                break;
+            
+            case 'r':
+                // 'r' key to focus on room ID input (when in main state)
+                if (currentNavState === 'main' && !event.ctrlKey && !event.metaKey) {
+                    event.preventDefault();
+                    const roomInput = document.getElementById('room-id-input');
+                    if (roomInput) {
+                        roomInput.focus();
+                        roomInput.select();
+                    }
+                }
+                break;
+                
+            case 'm':
+                // 'm' key to focus on message input (when in chat state)
+                if (currentNavState === 'chat' && !event.ctrlKey && !event.metaKey) {
+                    event.preventDefault();
+                    const messageInput = document.getElementById('new-message');
+                    if (messageInput) {
+                        messageInput.focus();
+                    }
+                }
+                break;
+        }
+    });
+}
+
+// Enhanced room switching functionality
+function switchToRoom(roomId, roomLabel) {
+    if (currentNavState === 'chat' && activeChatRoom === roomId) {
+        // Already in this room, just show notification
+        showNotification(`Already in room ${roomId}`, 'info');
+        return;
+    }
+    
+    // Navigate to chat with the new room
+    navigateToChat(roomId, roomLabel);
+}
+
+// ===========================================
+// END NAVIGATION SYSTEM
+// ===========================================
 
 // Message Reactions
 function addReactionToMessage(messageId, reaction) {
@@ -384,6 +568,12 @@ function setupAutoResizeTextarea() {
 }
 
 function handleAnonymousAuth() {
+    // Skip Firebase auth if not available
+    if (!auth.onAuthStateChanged) {
+        console.log('Firebase auth not available, skipping authentication');
+        return;
+    }
+    
     auth.onAuthStateChanged(async user => {
         if (user) {
             // User is signed in anonymously.
@@ -484,6 +674,14 @@ function setupJoinByIdListener() {
     joinBtn.addEventListener('click', () => {
         const roomId = input.value.trim();
         if (roomId) {
+            // For testing navigation without Firebase
+            if (typeof firebase === 'undefined') {
+                // Test navigation directly
+                navigateToChat(roomId, `Test Room ${roomId}`);
+                input.value = '';
+                return;
+            }
+            
             selectChatRoom(roomId);
             input.value = '';
         }
@@ -613,7 +811,7 @@ function setupBackButton() {
     }
     
     backButton.addEventListener('click', () => {
-        // Reset active chat room
+        // Clean up chat room resources first
         if (messageUnsubscribe) {
             messageUnsubscribe();
             messageUnsubscribe = null;
@@ -628,38 +826,11 @@ function setupBackButton() {
         }
         
         activeChatRoom = null;
-        
-        // Reset UI
-        const chatTitle = document.querySelector('.chat-title');
-        if (chatTitle) {
-            chatTitle.textContent = 'Select a Chat Room';
-        }
-        
-        backButton.style.display = 'none';
-        
-        // Clear messages
-        const messagesDiv = safeGetElement('messages');
-        if (messagesDiv) {
-            messagesDiv.innerHTML = '<div class="empty-state"><p>Select a room to start chatting</p></div>';
-        }
-        
-        // Clear typing indicator
-        const typingIndicator = safeGetElement('typing-indicator');
-        if (typingIndicator) {
-            typingIndicator.textContent = '';
-        }
-        
-        // Reset user count
-        updateUserCount(0);
-        
-        // Clear reply context
-        const replyContext = safeGetElement('reply-context');
-        if (replyContext) {
-            replyContext.style.display = 'none';
-        }
         replyToMessage = null;
         
-        showNotification('Left chat room', 'info');
+        // Hide back button and use navigation system
+        backButton.style.display = 'none';
+        navigateToMain();
     });
 }
 
@@ -849,20 +1020,14 @@ async function selectChatRoom(geohash) {
     // Add to recently joined rooms
     addToRecentlyJoinedRooms(geohash);
     
-    // Update the UI to show which room is selected
-    const chatTitle = document.querySelector('.chat-title');
+    // Navigate to chat state with room information and show back button
+    navigateToChat(geohash, `Room ${geohash}`);
+    
+    // Show our enhanced back button
     const backButton = safeGetElement('back-to-rooms-btn');
-    
-    if (chatTitle) {
-        chatTitle.textContent = `Room: ${activeChatRoom}`;
-    }
-    
     if (backButton) {
         backButton.style.display = 'flex';
     }
-    
-    // Show notification
-    showNotification(`Joined room ${geohash}`, 'success');
 
     const messagesDiv = document.getElementById('messages');
     const spinner = document.querySelector('.spinner-container');
