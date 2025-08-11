@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAutoResizeTextarea();
     setupRecentlyJoinedRooms();
     setupNotificationSystem();
+    setupKeyboardShortcuts();
 });
 
 // Recently Joined Rooms Management
@@ -257,6 +258,68 @@ function updateChatTitle(roomId) {
     if (chatTitle) {
         chatTitle.textContent = `Chat Room: ${roomId}`;
     }
+}
+
+// Keyboard shortcuts for enhanced navigation
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (event) => {
+        // Only handle shortcuts when not typing in input fields
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+            // Handle Enter key in room ID input
+            if (event.key === 'Enter' && event.target.id === 'room-id-input') {
+                event.preventDefault();
+                const joinBtn = document.getElementById('join-by-id-btn');
+                if (joinBtn) joinBtn.click();
+            }
+            return;
+        }
+        
+        // Global keyboard shortcuts
+        switch (event.key) {
+            case 'Escape':
+                // ESC key to go back to main from chat
+                if (currentNavState === 'chat') {
+                    event.preventDefault();
+                    navigateToMain();
+                }
+                break;
+            
+            case 'r':
+                // 'r' key to focus on room ID input (when in main state)
+                if (currentNavState === 'main' && !event.ctrlKey && !event.metaKey) {
+                    event.preventDefault();
+                    const roomInput = document.getElementById('room-id-input');
+                    if (roomInput) {
+                        roomInput.focus();
+                        roomInput.select();
+                    }
+                }
+                break;
+                
+            case 'm':
+                // 'm' key to focus on message input (when in chat state)
+                if (currentNavState === 'chat' && !event.ctrlKey && !event.metaKey) {
+                    event.preventDefault();
+                    const messageInput = document.getElementById('new-message');
+                    if (messageInput) {
+                        messageInput.focus();
+                    }
+                }
+                break;
+        }
+    });
+}
+
+// Enhanced room switching functionality
+function switchToRoom(roomId, roomLabel) {
+    if (currentNavState === 'chat' && activeChatRoom === roomId) {
+        // Already in this room, just show notification
+        showNotification(`Already in room ${roomId}`, 'info');
+        return;
+    }
+    
+    // Navigate to chat with the new room
+    navigateToChat(roomId, roomLabel);
 }
 
 // ===========================================

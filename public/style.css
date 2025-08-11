@@ -286,6 +286,16 @@ main {
     color: var(--text-secondary);
 }
 
+.shortcut-hint {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--radius-sm);
+    margin-left: 0.5rem;
+}
+
 .form-input {
     padding: 0.75rem;
     border: 1px solid var(--border-color);
