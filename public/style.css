@@ -202,9 +202,29 @@ main {
 
 .sidebar {
     grid-area: sidebar;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+        "profile recent"
+        "join nearby";
     gap: var(--space-3);
+}
+
+/* Position specific cards in the grid */
+#user-info {
+    grid-area: profile;
+}
+
+#join-room-by-id {
+    grid-area: join;
+}
+
+#recent-rooms {
+    grid-area: recent;
+}
+
+#nearby-rooms {
+    grid-area: nearby;
 }
 
 .chat-container {
@@ -1340,6 +1360,20 @@ main {
             "chat";
         padding: 1rem;
         gap: 1rem;
+    }
+    
+    .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+    
+    /* Reset grid areas for mobile - they'll stack naturally in flex */
+    #user-info,
+    #join-room-by-id,
+    #recent-rooms,
+    #nearby-rooms {
+        grid-area: unset;
     }
     
     .card {

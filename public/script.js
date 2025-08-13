@@ -75,7 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setupKeyboardShortcuts();
     setupBackButton();
     setupCopyRoomLink();
-    setupClearChat();
     checkForFirstVisit(); // Show onboarding for new users
 });
 
@@ -388,7 +387,6 @@ function handleBackButton() {
 
 function handleChatActionButtons() {
     const copyRoomLinkBtn = document.getElementById('copy-room-link-btn');
-    const clearChatBtn = document.getElementById('clear-chat-btn');
     
     if (copyRoomLinkBtn) {
         if (currentNavState === 'chat') {
@@ -397,16 +395,6 @@ function handleChatActionButtons() {
         } else {
             // Hide copy room link button
             copyRoomLinkBtn.style.display = 'none';
-        }
-    }
-    
-    if (clearChatBtn) {
-        if (currentNavState === 'chat') {
-            // Show clear chat button
-            clearChatBtn.style.display = 'flex';
-        } else {
-            // Hide clear chat button
-            clearChatBtn.style.display = 'none';
         }
     }
 }
@@ -747,44 +735,6 @@ function setupCopyRoomLink() {
             document.execCommand('copy');
             document.body.removeChild(textarea);
             showNotification('Room link copied to clipboard!', 'success');
-        }
-    });
-}
-
-// Clear Chat functionality
-function setupClearChat() {
-    const clearChatBtn = document.getElementById('clear-chat-btn');
-    if (!clearChatBtn) {
-        console.warn('Clear chat button not found');
-        return;
-    }
-
-    clearChatBtn.addEventListener('click', async () => {
-        if (!activeChatRoom) {
-            showNotification('No active room to clear.', 'warning');
-            return;
-        }
-
-        const confirmed = await showConfirmationDialog(
-            'Are you sure you want to clear all messages in this chat? This action cannot be undone.'
-        );
-
-        if (confirmed) {
-            try {
-                const messagesRef = db.collection('chatRooms').doc(activeChatRoom).collection('messages');
-                const snapshot = await messagesRef.get();
-                
-                const batch = db.batch();
-                snapshot.docs.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-                
-                await batch.commit();
-                showNotification('Chat cleared successfully.', 'success');
-            } catch (error) {
-                console.error('Error clearing chat:', error);
-                showNotification('Failed to clear chat. Please try again.', 'error');
-            }
         }
     });
 }
@@ -1764,9 +1714,8 @@ function getAndGeohashLocation() {
             console.log(`Geohash updated: ${userGeohash}`);
             geohashElement.textContent = userGeohash;
 
-            const initialRadius = document.getElementById('radius-input').value;
-            showRoomSearchLoading();
-            discoverRoomsByKmRadius(lastKnownPosition, parseFloat(initialRadius));
+            // Only do automatic room discovery on first load, not on periodic updates
+            // Users can manually search for rooms using the Search button
 
         }, error => {
             console.error("Geolocation error:", error);
