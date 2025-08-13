@@ -168,6 +168,37 @@ The user has requested a significant refactor of the room discovery mechanism an
 
 ---
 
+## 📜 Recent Git History (Aug 2025)
+
+The following summarizes notable commits and their impact since the UI overhaul:
+
+- 2025-08-13 — Implement comprehensive UI/UX improvements with design tokens and accessibility (bd877f4)
+  - Added `docs/design-tokens.md`
+  - Refined `public/index.html` and `public/style.css` to adopt tokens and accessibility patterns
+
+- 2025-08-13 — Quick Wins: auto-save drafts, copy room link, clear chat, loading states (7d95369)
+  - Updated `public/index.html`, `public/script.js`
+
+- 2025-08-13 — Accessibility, onboarding, keyboard shortcuts, and input validation (4ec3f6e)
+  - Updated `public/index.html`, `public/script.js`, `public/style.css`
+
+- 2025-08-13 — Remove clear chat, fix notification frequency, rearrange desktop layout (48628bd)
+  - Updated `public/index.html`, `public/script.js`, `public/style.css`
+
+- 2025-08-11 — Docs and UI updates (b7cb2f0)
+  - Added `docs/roadmap.md`
+  - Updated `docs/CONTEXT.md`, `public/index.html`, `public/script.js`, `public/style.css`
+
+### Net new/improved behaviors
+- Draft messages auto-save; restores when reopening a room
+- One-click copy room link
+- Loading states/skeletons for smoother perceived performance
+- Keyboard shortcuts for faster navigation and sending
+- Onboarding flow and input validation improvements
+- Accessibility upgrades (semantics, focus, and contrast improvements)
+- Notification frequency tuned to avoid spam
+- Desktop layout spacing and panel arrangement refined
+
 ## 🚀 GITHUB PREPARATION COMPLETED (Latest Update)
 
 **Goal:** Clean up the project and make it production-ready for GitHub with proper documentation.
@@ -218,7 +249,9 @@ blipz/
 │       └── emoji-picker-simple.js # Emoji picker
 ├── functions/            # Firebase Cloud Functions
 ├── docs/                 # Documentation
-│   └── CONTEXT.md        # Development history
+│   ├── CONTEXT.md        # Development history
+│   ├── design-tokens.md  # Design tokens and usage
+│   └── roadmap.md        # Development roadmap
 └── extensions/           # Firebase extensions
 ```
 
