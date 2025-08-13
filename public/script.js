@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeNavigation();
     handleUrlParameters(); // Handle URL parameters for room joining
     handleAnonymousAuth();
+    initializeMap();
     setupLocationListener();
     setupRoomSelectionListener();
     setupMessageSending();
@@ -66,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAvatarChangeListener();
     setupEmojiPicker();
     setupJoinByIdListener();
+    setupMapOverlayControls();
     setupRadiusSearch();
     setupThemeToggle();
     setupSoundToggle();
@@ -77,6 +79,135 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCopyRoomLink();
     checkForFirstVisit(); // Show onboarding for new users
 });
+
+// Map Initialization (Leaflet) — scaffold for Milestone 1
+function initializeMap() {
+    try {
+        if (typeof L === 'undefined') {
+            console.warn('Leaflet not loaded yet');
+            return;
+        }
+        const mapEl = document.getElementById('map');
+        if (!mapEl) return;
+
+        const map = L.map('map', { zoomControl: true });
+        // Default center roughly; will recenter when location is available
+        map.setView([37.7749, -122.4194], 12);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Hook: when user moves/zooms, re-render with debounce
+        let overlayUpdateTimer = null;
+        const scheduleOverlayRender = () => {
+            if (overlayUpdateTimer) clearTimeout(overlayUpdateTimer);
+            overlayUpdateTimer = setTimeout(() => renderVisibleGeohashOverlays(map), 150);
+        };
+        map.on('moveend', scheduleOverlayRender);
+
+        // When we get the user's location later, recenter map
+        const originalGeohashUpdate = getAndGeohashLocation;
+        // Wrap existing function to also recenter map once
+        let hasCentered = false;
+        window.getAndGeohashLocation = function() {
+            originalGeohashUpdate();
+            if (!hasCentered && lastKnownPosition) {
+                hasCentered = true;
+                map.setView([lastKnownPosition.latitude, lastKnownPosition.longitude], 14);
+                // Initial overlays after first locate
+                renderVisibleGeohashOverlays(map);
+            }
+        };
+    } catch (e) {
+        console.error('Error initializing map:', e);
+    }
+}
+
+// Render geohash 6-character grid overlays within current viewport
+let currentGeohashLayers = [];
+function renderVisibleGeohashOverlays(map) {
+    try {
+        // Clear previous layers
+        currentGeohashLayers.forEach(layer => map.removeLayer(layer));
+        currentGeohashLayers = [];
+
+        const bounds = map.getBounds();
+        const zoom = map.getZoom();
+        const south = bounds.getSouth();
+        const west = bounds.getWest();
+        const north = bounds.getNorth();
+        const east = bounds.getEast();
+
+        // Sample a grid of lat/lon to get covering geohashes
+        const latSteps = Math.max(6, Math.floor((north - south) / 0.01));
+        const lonSteps = Math.max(6, Math.floor((east - west) / 0.01));
+        const latStep = (north - south) / latSteps;
+        const lonStep = (east - west) / lonSteps;
+
+        const seen = new Set();
+        for (let i = 0; i <= latSteps; i++) {
+            for (let j = 0; j <= lonSteps; j++) {
+                const lat = south + i * latStep;
+                const lon = west + j * lonStep;
+                const gh = ngeohash.encode(lat, lon, 6);
+                if (seen.has(gh)) continue;
+                seen.add(gh);
+            }
+        }
+
+        const geohashes = Array.from(seen).slice(0, 150);
+        fetchActiveRoomsByGeohash(geohashes).then(activeSet => {
+            geohashes.forEach(gh => {
+                const isActive = activeSet.has(gh);
+                const b = ngeohash.bounds(gh);
+                const rect = L.rectangle([[b.south, b.west], [b.north, b.east]], {
+                    color: isActive ? 'rgba(16,185,129,0.9)' : 'rgba(99,102,241,0.6)',
+                    weight: 1,
+                    fillColor: isActive ? 'rgba(16,185,129,0.2)' : 'rgba(99,102,241,0.12)',
+                    fillOpacity: 0.2
+                });
+                rect.addTo(map);
+                currentGeohashLayers.push(rect);
+
+                const center = ngeohash.decode(gh);
+                const label = L.marker([center.latitude, center.longitude], {
+                    icon: L.divIcon({
+                        className: 'geohash-label',
+                        html: `<div class="gh-label ${isActive ? 'active' : 'inactive'}" role="button" tabindex="0" aria-label="${isActive ? 'Enter room ' : 'Create room '} ${gh}">${gh}</div>`,
+                        iconSize: null
+                    })
+                });
+                label.addTo(map);
+                label.on('click', () => selectChatRoom(gh));
+                label.on('keypress', (e) => { if (e.originalEvent.key === 'Enter') selectChatRoom(gh); });
+                currentGeohashLayers.push(label);
+            });
+        });
+    } catch (e) {
+        console.warn('renderVisibleGeohashOverlays error:', e);
+    }
+}
+
+async function fetchActiveRoomsByGeohash(geohashes) {
+    const active = new Set();
+    try {
+        if (!db || !db.collection) return active;
+        for (let i = 0; i < geohashes.length; i += 10) {
+            const chunk = geohashes.slice(i, i + 10);
+            const snap = await db.collection('chatRooms').where('geohash', 'in', chunk).get();
+            snap.forEach(doc => {
+                const data = doc.data();
+                const gh = data.geohash || doc.id;
+                if (gh) active.add(gh);
+            });
+        }
+    } catch (e) {
+        console.warn('fetchActiveRoomsByGeohash error:', e);
+    }
+    return active;
+}
 
 // Recently Joined Rooms Management
 function getRecentlyJoinedRooms() {
@@ -1066,6 +1197,63 @@ function setupJoinByIdListener() {
     });
 }
 
+// Map overlay controls: mirror existing join/radius with floating UI
+function setupMapOverlayControls() {
+    const joinBtn = document.getElementById('map-join-btn');
+    const joinInput = document.getElementById('map-room-id-input');
+    const radiusBtn = document.getElementById('map-search-btn');
+    const radiusInput = document.getElementById('map-radius-input');
+    const overlayNameEl = document.getElementById('map-user-name');
+    const changeNameBtn = document.getElementById('map-change-name-btn');
+
+    if (overlayNameEl) {
+        const nameEl = document.getElementById('user-name');
+        overlayNameEl.textContent = nameEl ? nameEl.textContent : 'User';
+        // Keep overlay name in sync whenever profile updates
+        db && auth && auth.currentUser && db.collection('users').doc(auth.currentUser.uid).onSnapshot(doc => {
+            if (doc.exists && overlayNameEl) overlayNameEl.textContent = doc.data().name;
+        });
+    }
+
+    if (changeNameBtn) {
+        changeNameBtn.addEventListener('click', () => {
+            const changeBtn = document.getElementById('change-name-btn');
+            if (changeBtn) changeBtn.click();
+        });
+    }
+
+    if (joinBtn && joinInput) {
+        joinBtn.addEventListener('click', async () => {
+            const roomId = joinInput.value.trim();
+            const validationResult = validateRoomId(roomId);
+            if (!validationResult.valid) {
+                showNotification(validationResult.message, 'error');
+                joinInput.focus();
+                return;
+            }
+            await selectChatRoom(roomId);
+            joinInput.value = '';
+        });
+        joinInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinBtn.click();
+        });
+    }
+
+    if (radiusBtn && radiusInput) {
+        radiusBtn.addEventListener('click', () => {
+            const radiusKm = parseFloat(radiusInput.value);
+            if (lastKnownPosition && radiusKm > 0) {
+                discoverRoomsByKmRadius(lastKnownPosition, radiusKm);
+            } else if (!lastKnownPosition) {
+                showNotification('Location not available. Please enable location services.', 'error');
+            } else {
+                showNotification('Please enter a valid radius.', 'error');
+            }
+        });
+        radiusInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') radiusBtn.click(); });
+    }
+}
+
 // Validate room ID input
 function validateRoomId(roomId) {
     if (!roomId || roomId.length === 0) {
@@ -1439,6 +1627,9 @@ async function selectChatRoom(geohash) {
     
     // Add to recently joined rooms
     addToRecentlyJoinedRooms(geohash);
+
+    // Update header immediately to reflect target room
+    updateChatTitle(geohash);
     
     // Load draft message for this room
     const messageInput = document.getElementById('new-message');
@@ -1453,12 +1644,14 @@ async function selectChatRoom(geohash) {
     navigateToChat(geohash, `Room ${geohash}`);
 
     const messagesDiv = document.getElementById('messages');
+    if (messagesDiv) {
+        messagesDiv.innerHTML = ''; // Clear old messages first
+    }
     const spinner = document.querySelector('.spinner-container');
-    spinner.style.display = 'block'; // Show spinner
-    messagesDiv.innerHTML = ''; // Clear old messages for a clean slate
+    if (spinner) spinner.style.display = 'block';
 
-    // Set up a real-time listener for new messages
-    const messagesRef = roomRef.collection('messages').orderBy('timestamp');
+    // Set up a real-time listener for new messages (unsubscribe previous handled earlier)
+    const messagesRef = db.collection('chatRooms').doc(geohash).collection('messages').orderBy('timestamp');
     let isInitialLoad = true;
     messageUnsubscribe = messagesRef.onSnapshot(snapshot => {
         const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1485,12 +1678,14 @@ async function selectChatRoom(geohash) {
             }
         }
         
+        // Before rendering, ensure we're still on the same room to avoid stale updates
+        if (activeChatRoom !== geohash) return;
         displayMessages(messages, !isInitialLoad);
         isInitialLoad = false;
     });
 
     // Set up presence listener for typing indicators
-    const presenceRef = roomRef.collection('users');
+    const presenceRef = db.collection('chatRooms').doc(geohash).collection('users');
     presenceUnsubscribe = presenceRef.onSnapshot(snapshot => {
         const typingUsers = [];
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -1558,6 +1753,7 @@ async function fetchAndDisplayMessages(geohash) {
 
 async function displayMessages(messages, highlightNew = false) {
     const messagesDiv = document.getElementById('messages');
+    if (!messagesDiv) return;
     messagesDiv.innerHTML = ''; // Clear old messages
     const currentUser = auth.currentUser;
 

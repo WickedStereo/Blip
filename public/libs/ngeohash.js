@@ -55,8 +55,17 @@
         return geohash;
     }
 
-    // Decode geohash to latitude and longitude
+    // Decode geohash to latitude and longitude (center)
     function decode(geohash) {
+        const ranges = decodeRanges(geohash);
+        return {
+            latitude: (ranges.lat[0] + ranges.lat[1]) / 2,
+            longitude: (ranges.lon[0] + ranges.lon[1]) / 2
+        };
+    }
+
+    // Internal: return full lat/lon ranges for a geohash
+    function decodeRanges(geohash) {
         let latRange = [-90.0, 90.0];
         let lonRange = [-180.0, 180.0];
         let even = true;
@@ -66,7 +75,6 @@
             for (let j = 4; j >= 0; j--) {
                 const bit = (cd >> j) & 1;
                 if (even) {
-                    // longitude
                     const mid = (lonRange[0] + lonRange[1]) / 2;
                     if (bit === 1) {
                         lonRange[0] = mid;
@@ -74,7 +82,6 @@
                         lonRange[1] = mid;
                     }
                 } else {
-                    // latitude
                     const mid = (latRange[0] + latRange[1]) / 2;
                     if (bit === 1) {
                         latRange[0] = mid;
@@ -85,10 +92,17 @@
                 even = !even;
             }
         }
+        return { lat: latRange, lon: lonRange };
+    }
 
+    // Bounds for a geohash: {south, west, north, east}
+    function bounds(geohash) {
+        const r = decodeRanges(geohash);
         return {
-            latitude: (latRange[0] + latRange[1]) / 2,
-            longitude: (lonRange[0] + lonRange[1]) / 2
+            south: r.lat[0],
+            west: r.lon[0],
+            north: r.lat[1],
+            east: r.lon[1]
         };
     }
 
@@ -144,7 +158,8 @@
     const ngeohash = {
         encode: encode,
         decode: decode,
-        bboxes: bboxes
+        bboxes: bboxes,
+        bounds: bounds
     };
 
     // Support different module systems

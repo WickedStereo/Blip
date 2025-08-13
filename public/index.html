@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -31,7 +32,34 @@
         <!-- Live region for dynamic announcements -->
         <div id="live-announcements" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
         
-        <div class="sidebar" role="complementary" aria-label="Chat room controls">
+			<div class="sidebar" role="complementary" aria-label="Chat room controls">
+				<div id="map-card" class="card" aria-label="Map view">
+					<h3>Map</h3>
+					<div id="map" role="application" aria-label="Geohash map"></div>
+					<div id="map-overlays" aria-hidden="false">
+						<div class="overlay-panel overlay-top-left">
+							<label for="map-radius-input">Radius (km)</label>
+							<div class="overlay-row">
+								<input type="number" id="map-radius-input" class="form-input" value="5" min="1" max="50" aria-label="Search radius in kilometers">
+								<button id="map-search-btn" class="btn btn-primary">Search</button>
+							</div>
+						</div>
+						<div class="overlay-panel overlay-top-right">
+							<label for="map-room-id-input">Join by ID</label>
+							<div class="overlay-row">
+								<input type="text" id="map-room-id-input" class="form-input" placeholder="6-char geohash" maxlength="6" aria-label="Room ID">
+								<button id="map-join-btn" class="btn btn-primary">Join</button>
+							</div>
+						</div>
+						<div class="overlay-panel overlay-bottom-left">
+							<div class="overlay-row">
+								<span class="info-label">Name:</span>
+								<span id="map-user-name" class="info-value">Loading...</span>
+								<button id="map-change-name-btn" class="btn btn-secondary btn-sm" aria-label="Edit your name">Edit</button>
+							</div>
+						</div>
+					</div>
+				</div>
             <div id="user-info" class="card">
                 <h3>Your Profile</h3>
                 <div class="user-avatar-section">
@@ -147,6 +175,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js" defer></script>
+		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
     <script src="script.js" defer></script>
 </body>
 </html>

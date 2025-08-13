@@ -7,9 +7,9 @@
 ## ✨ Features
 
 ### 🔐 Privacy-First Design
-- **Anonymous Authentication**: Automatic Firebase anonymous auth - no sign-up required
-- **Geohash Location Privacy**: GPS coordinates never leave your device - only geohash approximations are used
-- **No Personal Data**: No email, phone, or personal information required
+- **Anonymous Browsing**: Browse rooms without signing in; account required to send (see roadmap)
+- **Geohash Location Privacy**: GPS coordinates never leave your device — only geohash approximations are used
+- **Minimal Data**: No raw GPS or unnecessary personal data
 
 ### 💬 Modern Chat Experience
 - **Real-time Messaging**: Instant message delivery with Firebase Firestore
@@ -19,9 +19,9 @@
 - **User Count**: Live participant count in each room
 
 ### 🌍 Location-Based Discovery
-- **Radius Search**: Find chat rooms within a specified kilometer radius
-- **Geohash Precision**: Approximate location matching for privacy
-- **Smart Room Logic**: "Enter" existing rooms or "Create" new ones
+- **Radius Search (current)**: Find chat rooms within a specified kilometer radius
+- **Map‑First Discovery (in progress)**: Interactive map with geohash grid overlays, labels, and active-room highlighting
+- **Smart Room Logic**: "Enter" existing rooms or "Create" new ones (from map labels or list)
 - **Recently Joined**: Quick access to your recently visited rooms
 
 ### 🎨 Modern UI/UX
@@ -94,8 +94,10 @@ blipz/
 ├── firestore.rules       # Firestore security rules
 ├── firestore.indexes.json # Database indexes
 ├── firebase.json         # Firebase configuration
-└── docs/                 # Project documentation
-    └── CONTEXT.md        # Development context and history
+└── docs/                  # Project documentation
+    ├── CONTEXT.md         # Development context and history
+    ├── design-tokens.md   # Design tokens
+    └── roadmap.md         # Product roadmap (map-first, kid-safe, text-only)
 ```
 
 ## 🔧 Technology Stack
@@ -106,7 +108,7 @@ blipz/
 - **Real-time**: Firebase Firestore real-time listeners
 - **UI**: Custom CSS with CSS Grid, Flexbox, and CSS Custom Properties
 
-## 🛡️ Privacy & Security
+## 🛡️ Privacy, Safety & Security
 
 ### Location Privacy
 - **No GPS Storage**: Exact coordinates never leave your device
@@ -114,47 +116,37 @@ blipz/
 - **User Control**: Location updates can be disabled with privacy toggle
 
 ### Data Security
-- **Anonymous Auth**: No personal identifiers required
-- **Firestore Rules**: Strict security rules prevent unauthorized access
+- **Anonymous Browsing + Account to Send (roadmap)**: Read rooms anonymously; sign in to post
+- **Firestore Rules**: Strict rules prevent unauthorized access and enforce write permissions
 - **Local Storage**: Minimal data stored locally (theme preferences, recent rooms)
 
 ### Message Privacy
-- **Ephemeral Messages**: Messages auto-delete after inactivity (via Cloud Functions)
-- **No Message History**: No persistent message storage for new users
+- **Ephemeral Messages**: Messages auto-delete after 24h (via Cloud Functions)
+- **Text‑Only**: No media uploads; messages are sanitized plain text
 - **Room-Based**: Messages are scoped to specific geographic chat rooms
+
+### Family Safety (roadmap)
+- Stronger profanity filtering and link stripping/neutralization in kid‑safe mode
 
 ## 🎯 How It Works
 
 1. **Location Detection**: App requests approximate location via browser geolocation API
 2. **Geohash Conversion**: GPS coordinates are converted to geohash strings locally
-3. **Room Discovery**: Search for existing chat rooms within a specified radius
+3. **Room Discovery**: Radius‑based search (today); map‑first geohash discovery (roadmap)
 4. **Join/Create**: Enter existing rooms or create new ones based on your geohash
 5. **Real-time Chat**: Exchange messages with others in the same approximate area
-6. **Auto-Discovery**: Rooms are automatically discovered as you move between locations
+6. **Ephemerality**: Messages auto‑delete after 24h; inactive rooms are deleted after 24h
 
 ## 🚧 Development Roadmap
 
-### Phase 1: Core Features ✅
-- [x] Anonymous authentication
-- [x] Geohash-based location system
-- [x] Real-time messaging
-- [x] Radius-based room discovery
-- [x] Modern responsive UI
-- [x] Message reactions
-- [x] Sound notifications
+See `docs/roadmap.md` for the full, up‑to‑date plan and ordering (map‑first; auth/kid‑safe post‑MVP).
 
-### Phase 2: Backend Maintenance 🚧
-- [ ] Cloud Functions for message cleanup
-- [ ] Inactive room deletion
-- [ ] Advanced Firestore security rules
-- [ ] Performance monitoring
-
-### Phase 3: Enhanced Features 📋
-- [ ] Message media support (images, voice notes)
-- [ ] Custom room names and descriptions
-- [ ] User avatars and nicknames
-- [ ] Push notifications
-- [ ] PWA (Progressive Web App) support
+Near‑term highlights:
+- Map‑first landing page with geohash overlays and active‑room pop‑ups
+- Create/join rooms directly from the map
+- Text‑only chat with 24h TTL; Chats tab with cached recent rooms (24h)
+- Backend maintenance: inactive room deletion, indexes, presence consistency
+- Post‑MVP: account required to send; kid‑safe filters and compliance
 
 ## 🤝 Contributing
 

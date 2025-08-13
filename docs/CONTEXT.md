@@ -199,6 +199,29 @@ The following summarizes notable commits and their impact since the UI overhaul:
 - Notification frequency tuned to avoid spam
 - Desktop layout spacing and panel arrangement refined
 
+## 🗺️ MAP INTEGRATION IN PROGRESS (Latest)
+
+What’s working now:
+- Leaflet + OpenStreetMap tiles integrated into the sidebar map card
+- 6‑character geohash grid overlays for the current viewport
+- Labels at geohash centroids; active rooms highlighted; click to enter/create
+- Room switching cleaned up (listeners reset, header updates immediately)
+
+New since last update:
+- Map is now the default fullscreen landing layout
+- Floating overlay controls on the map (radius search, join-by-ID, name edit)
+
+Files touched:
+- `public/index.html`: Leaflet CSS/JS, `#map` container
+- `public/style.css`: layout adjustments, map and label styles, overlay UI
+- `public/script.js`: map init, overlay rendering, Firestore active-room checks, overlay controls
+- `public/libs/ngeohash.js`: added `bounds(geohash)` and decode ranges util
+
+Next steps:
+- Debounce/lazy-load overlay updates on pan/zoom
+- Popups with room meta and filters
+- Deep links to `/room/:geohash`
+
 ## 🚀 GITHUB PREPARATION COMPLETED (Latest Update)
 
 **Goal:** Clean up the project and make it production-ready for GitHub with proper documentation.

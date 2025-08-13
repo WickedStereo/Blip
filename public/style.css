@@ -205,10 +205,78 @@ main {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
-        "profile recent"
-        "join nearby";
+        "map recent"
+        "profile join"
+        "nearby nearby";
     gap: var(--space-3);
 }
+#map-card {
+    grid-area: map;
+}
+
+#map {
+    width: 100%;
+    height: 260px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+}
+
+.geohash-label .gh-label {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 2px 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.geohash-label .gh-label.active {
+    border-color: var(--success-color);
+}
+
+.geohash-label .gh-label.inactive {
+    opacity: 0.85;
+}
+
+/* Map overlay controls */
+#map-overlays {
+    position: relative;
+}
+
+.overlay-panel {
+    position: absolute;
+    background: rgba(17, 24, 39, 0.6);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 0.5rem;
+    box-shadow: var(--shadow-md);
+    color: var(--text-inverse);
+}
+
+[data-theme="light"] .overlay-panel {
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--text-primary);
+}
+
+.overlay-top-left { top: 12px; left: 12px; }
+.overlay-top-right { top: 12px; right: 12px; }
+.overlay-bottom-left { bottom: 12px; left: 12px; }
+
+.overlay-row { display: flex; gap: 0.5rem; align-items: center; }
+
+.overlay-panel label { font-size: 12px; font-weight: 600; margin-bottom: 0.25rem; display: block; }
+
+#map-room-id-input, #map-radius-input { min-width: 160px; height: 36px; }
+
+.overlay-panel .btn-sm { min-height: 32px; }
+
+.overlay-panel .form-input { min-height: 36px; }
+
+.overlay-panel .info-label { color: var(--text-inverse); }
+[data-theme="light"] .overlay-panel .info-label { color: var(--text-secondary); }
 
 /* Position specific cards in the grid */
 #user-info {
@@ -1462,18 +1530,16 @@ main {
    =========================================== */
 
 /* Navigation states */
-.app-state-main .chat-container {
-    display: none;
-}
+.app-state-main .chat-container { display: none; }
+.app-state-chat .sidebar { display: none; }
+.app-state-chat main { grid-template-columns: 1fr; grid-template-areas: "chat"; }
 
-.app-state-chat .sidebar {
-    display: none;
-}
-
-.app-state-chat main {
-    grid-template-columns: 1fr;
-    grid-template-areas: "chat";
-}
+/* Map-first fullscreen mode */
+.app-state-main .sidebar { grid-area: content; }
+.app-state-main main { grid-template-columns: 1fr; grid-template-areas: "content"; }
+.app-state-main #map-card { padding: 0; border: none; box-shadow: none; background: transparent; }
+.app-state-main #map { height: calc(100vh - 120px); border: 1px solid var(--border-color); }
+.app-state-main #map-card h3 { display: none; }
 
 
 
