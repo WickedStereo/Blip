@@ -11,26 +11,28 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Theme Toggle -->
-    <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">
-        <span id="theme-icon">🌙</span>
-    </button>
-
-    <!-- Sound Toggle -->
-    <button class="sound-toggle" id="sound-toggle" title="Toggle sound notifications">
-        <span id="sound-icon">🔊</span>
-    </button>
-
-    <header>
-        <h1>Blipz</h1>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <header role="banner">
+        <div class="header-nav">
+            <h1>Blipz</h1>
+            <div class="nav-controls">
+                <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+                    <span id="theme-icon" aria-hidden="true">🌙</span>
+                </button>
+                <button class="sound-toggle" id="sound-toggle" title="Toggle sound notifications" aria-label="Toggle sound notifications">
+                    <span id="sound-icon" aria-hidden="true">🔊</span>
+                </button>
+            </div>
+        </div>
     </header>
 
-    <main>
-        <div class="sidebar">
+    <main id="main-content" role="main">
+        <div class="sidebar" role="complementary" aria-label="Chat room controls">
             <div id="user-info" class="card">
                 <h3>Your Profile</h3>
                 <div class="user-avatar-section">
-                    <img id="user-avatar-preview" class="avatar" src="">
+                    <img id="user-avatar-preview" class="avatar" src="" alt="Your avatar">
                     <div>
                         <button id="change-avatar-btn" class="btn btn-secondary btn-sm">Change Avatar</button>
                     </div>
@@ -40,7 +42,7 @@
                     <span class="info-label">Name:</span>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <span id="user-name" class="info-value">Loading...</span>
-                        <button id="change-name-btn" class="btn btn-secondary btn-sm">Edit</button>
+                        <button id="change-name-btn" class="btn btn-secondary btn-sm" aria-label="Edit your name">Edit</button>
                     </div>
                 </div>
                 
@@ -56,7 +58,8 @@
 
                 <div class="privacy-toggle-container">
                     <label for="privacy-toggle" style="flex: 1; font-weight: 500;">Privacy Mode</label>
-                    <input type="checkbox" id="privacy-toggle">
+                    <input type="checkbox" id="privacy-toggle" aria-describedby="privacy-description">
+                    <div id="privacy-description" class="sr-only">Toggle privacy mode to hide your location from other users</div>
                 </div>
             </div>
 
@@ -65,15 +68,16 @@
                 <div class="join-room-form">
                     <div class="input-group">
                         <label for="room-id-input">Room ID (Geohash) <span class="shortcut-hint">Press 'R' to focus</span></label>
-                        <input type="text" id="room-id-input" class="form-input" placeholder="Enter 6-character room ID..." title="Press Enter to join">
+                        <input type="text" id="room-id-input" class="form-input" placeholder="Enter 6-character room ID..." title="Press Enter to join" aria-describedby="room-id-help">
+                        <div id="room-id-help" class="sr-only">Enter a 6-character room ID to join a specific chat room</div>
                     </div>
-                    <button id="join-by-id-btn" class="btn btn-primary">Join</button>
+                    <button id="join-by-id-btn" class="btn btn-primary" aria-describedby="room-id-input">Join</button>
                 </div>
             </div>
 
             <div id="recent-rooms" class="card">
                 <h3>Recently Joined</h3>
-                <ul class="rooms-list">
+                <ul class="rooms-list" role="list" aria-label="Recently joined chat rooms">
                     <!-- Recently joined rooms will be listed here -->
                 </ul>
             </div>
@@ -82,46 +86,48 @@
                 <h3>Nearby Chat Rooms</h3>
                 <div class="radius-control">
                     <div class="input-group">
-                        <label for="radius-input">Search Radius</label>
-                        <input type="number" id="radius-input" class="form-input" value="5" min="1" max="50">
+                        <label for="radius-input">Search Radius (km)</label>
+                        <input type="number" id="radius-input" class="form-input" value="5" min="1" max="50" aria-describedby="radius-help">
+                        <div id="radius-help" class="sr-only">Set the search radius in kilometers to find nearby chat rooms</div>
                     </div>
                     <button id="search-radius-btn" class="btn btn-primary">Search</button>
                 </div>
-                <ul class="rooms-list">
+                <ul class="rooms-list" role="list" aria-label="Nearby chat rooms">
                     <!-- Chat rooms will be listed here -->
                 </ul>
             </div>
         </div>
 
-        <div class="chat-container">
+        <div class="chat-container" role="main" aria-label="Chat messages">
             <div id="chat-room" class="card">
                 <div class="chat-header">
                     <div class="chat-title-section">
-                        <button id="back-to-rooms-btn" class="back-btn" title="Back to room selection" style="display: none;">
-                            <span>←</span>
+                        <button id="back-to-rooms-btn" class="back-btn" title="Back to room selection" style="display: none;" aria-label="Back to room selection">
+                            <span aria-hidden="true">←</span>
                         </button>
                         <h2 class="chat-title">Select a Chat Room</h2>
                     </div>
-                    <div id="user-count">0 online</div>
+                    <div id="user-count" aria-live="polite">0 online</div>
                 </div>
                 
-                <div id="messages">
+                <div id="messages" role="log" aria-live="polite" aria-label="Chat messages">
                     <div class="spinner-container">
-                        <div class="spinner"></div>
+                        <div class="spinner" aria-label="Loading"></div>
                     </div>
                     <!-- Messages will be displayed here -->
                 </div>
                 
-                <div id="typing-indicator"></div>
+                <div id="typing-indicator" aria-live="polite" aria-label="Typing indicator"></div>
                 
-                <div id="reply-context" style="display: none;">
+                <div id="reply-context" style="display: none;" role="status">
                     <span id="reply-context-text"></span>
-                    <button id="cancel-reply-btn">×</button>
+                    <button id="cancel-reply-btn" aria-label="Cancel reply">×</button>
                 </div>
                 
-                <div id="message-input">
-                    <button id="emoji-btn" title="Add emoji">😊</button>
-                    <textarea id="new-message" class="form-input" placeholder="Type a message..." rows="1"></textarea>
+                <div id="message-input" role="form" aria-label="Send message">
+                    <button id="emoji-btn" title="Add emoji" aria-label="Add emoji">😊</button>
+                    <label for="new-message" class="sr-only">Type your message</label>
+                    <textarea id="new-message" class="form-input" placeholder="Type a message..." rows="1" aria-label="Type your message"></textarea>
                     <button id="send-button" class="btn btn-primary">Send</button>
                 </div>
             </div>
