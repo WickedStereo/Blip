@@ -57,6 +57,7 @@ let lastKnownPosition = null;
 document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
     initializeNavigation();
+    handleUrlParameters(); // Handle URL parameters for room joining
     handleAnonymousAuth();
     setupLocationListener();
     setupRoomSelectionListener();
@@ -73,6 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setupNotificationSystem();
     setupKeyboardShortcuts();
     setupBackButton();
+    setupCopyRoomLink();
+    setupClearChat();
 });
 
 // Recently Joined Rooms Management
@@ -165,6 +168,38 @@ function setupRecentlyJoinedRooms() {
     updateRecentlyJoinedRoomsDisplay();
 }
 
+// Handle URL parameters for direct room joining
+function handleUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomParam = urlParams.get('room');
+    
+    if (roomParam) {
+        // Validate room ID format (should be 6 characters)
+        if (roomParam.length === 6) {
+            // Wait for authentication and then join the room
+            setTimeout(() => {
+                if (auth && auth.currentUser) {
+                    selectChatRoom(roomParam);
+                    showNotification(`Joining room from link: ${roomParam}`, 'info');
+                } else {
+                    // Try again after a short delay if auth is not ready
+                    setTimeout(() => {
+                        if (auth && auth.currentUser) {
+                            selectChatRoom(roomParam);
+                            showNotification(`Joining room from link: ${roomParam}`, 'info');
+                        }
+                    }, 1000);
+                }
+            }, 500);
+        } else {
+            showNotification('Invalid room ID in URL. Room IDs must be 6 characters.', 'error');
+        }
+        
+        // Clean up URL without refreshing page
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
 // ===========================================
 // TWO-LEVEL NAVIGATION SYSTEM
 // ===========================================
@@ -203,6 +238,9 @@ function setNavigationState(state, options = {}) {
         // Handle back button
         handleBackButton();
         
+        // Handle chat action buttons
+        handleChatActionButtons();
+        
         // Update chat title if entering chat state
         if (state === 'chat' && options.roomId) {
             updateChatTitle(options.roomId);
@@ -231,6 +269,31 @@ function handleBackButton() {
         } else {
             // Hide our header back button
             backButton.style.display = 'none';
+        }
+    }
+}
+
+function handleChatActionButtons() {
+    const copyRoomLinkBtn = document.getElementById('copy-room-link-btn');
+    const clearChatBtn = document.getElementById('clear-chat-btn');
+    
+    if (copyRoomLinkBtn) {
+        if (currentNavState === 'chat') {
+            // Show copy room link button
+            copyRoomLinkBtn.style.display = 'flex';
+        } else {
+            // Hide copy room link button
+            copyRoomLinkBtn.style.display = 'none';
+        }
+    }
+    
+    if (clearChatBtn) {
+        if (currentNavState === 'chat') {
+            // Show clear chat button
+            clearChatBtn.style.display = 'flex';
+        } else {
+            // Hide clear chat button
+            clearChatBtn.style.display = 'none';
         }
     }
 }
@@ -398,6 +461,90 @@ function displayMessageReactions(messageElement, messageId) {
             
             reactionsContainer.appendChild(reactionBtn);
         });
+    });
+}
+
+// Confirmation Dialog utility
+function showConfirmationDialog(message, onConfirm, onCancel = null) {
+    return new Promise((resolve) => {
+        const confirmed = confirm(message);
+        if (confirmed) {
+            if (onConfirm) onConfirm();
+            resolve(true);
+        } else {
+            if (onCancel) onCancel();
+            resolve(false);
+        }
+    });
+}
+
+// Copy Room Link functionality
+function setupCopyRoomLink() {
+    const copyRoomLinkBtn = document.getElementById('copy-room-link-btn');
+    if (!copyRoomLinkBtn) {
+        console.warn('Copy room link button not found');
+        return;
+    }
+
+    copyRoomLinkBtn.addEventListener('click', async () => {
+        if (!activeChatRoom) {
+            showNotification('No active room to copy link for.', 'warning');
+            return;
+        }
+
+        const roomUrl = `${window.location.origin}${window.location.pathname}?room=${activeChatRoom}`;
+        
+        try {
+            await navigator.clipboard.writeText(roomUrl);
+            showNotification('Room link copied to clipboard!', 'success');
+        } catch (error) {
+            // Fallback for browsers that don't support clipboard API
+            const textarea = document.createElement('textarea');
+            textarea.value = roomUrl;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showNotification('Room link copied to clipboard!', 'success');
+        }
+    });
+}
+
+// Clear Chat functionality
+function setupClearChat() {
+    const clearChatBtn = document.getElementById('clear-chat-btn');
+    if (!clearChatBtn) {
+        console.warn('Clear chat button not found');
+        return;
+    }
+
+    clearChatBtn.addEventListener('click', async () => {
+        if (!activeChatRoom) {
+            showNotification('No active room to clear.', 'warning');
+            return;
+        }
+
+        const confirmed = await showConfirmationDialog(
+            'Are you sure you want to clear all messages in this chat? This action cannot be undone.'
+        );
+
+        if (confirmed) {
+            try {
+                const messagesRef = db.collection('chatRooms').doc(activeChatRoom).collection('messages');
+                const snapshot = await messagesRef.get();
+                
+                const batch = db.batch();
+                snapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                
+                await batch.commit();
+                showNotification('Chat cleared successfully.', 'success');
+            } catch (error) {
+                console.error('Error clearing chat:', error);
+                showNotification('Failed to clear chat. Please try again.', 'error');
+            }
+        }
     });
 }
 
@@ -662,19 +809,32 @@ function setupJoinByIdListener() {
     const joinBtn = document.getElementById('join-by-id-btn');
     const input = document.getElementById('room-id-input');
 
-    joinBtn.addEventListener('click', () => {
+    joinBtn.addEventListener('click', async () => {
         const roomId = input.value.trim();
         if (roomId) {
-            // For testing navigation without Firebase
-            if (typeof firebase === 'undefined') {
-                // Test navigation directly
-                navigateToChat(roomId, `Test Room ${roomId}`);
-                input.value = '';
-                return;
-            }
+            // Add loading state
+            const originalText = joinBtn.textContent;
+            joinBtn.disabled = true;
+            joinBtn.textContent = 'Joining...';
             
-            selectChatRoom(roomId);
-            input.value = '';
+            try {
+                // For testing navigation without Firebase
+                if (typeof firebase === 'undefined') {
+                    // Test navigation directly and set active room
+                    activeChatRoom = roomId;
+                    navigateToChat(roomId, `Test Room ${roomId}`);
+                    input.value = '';
+                } else {
+                    await selectChatRoom(roomId);
+                    input.value = '';
+                }
+            } finally {
+                // Reset button state
+                joinBtn.disabled = false;
+                joinBtn.textContent = originalText;
+            }
+        } else {
+            showNotification('Please enter a room ID.', 'warning');
         }
     });
 }
@@ -914,6 +1074,30 @@ function setupMessageSending() {
             newSendButton.click();
         }
     });
+
+    // Auto-save draft messages
+    newMessageInput.addEventListener('input', () => {
+        if (activeChatRoom) {
+            localStorage.setItem(`draft_${activeChatRoom}`, newMessageInput.value);
+        }
+    });
+
+    // Load draft message when entering a room
+    function loadDraftMessage() {
+        if (activeChatRoom) {
+            const draft = localStorage.getItem(`draft_${activeChatRoom}`);
+            if (draft) {
+                newMessageInput.value = draft;
+            }
+        }
+    }
+
+    // Clear draft when message is sent
+    const originalSendMessage = window.sendMessage;
+    window.sendMessage = function(geohash, text) {
+        originalSendMessage(geohash, text);
+        localStorage.removeItem(`draft_${geohash}`);
+    };
 }
 
 function updateTypingStatus(isTyping) {
@@ -1009,6 +1193,15 @@ async function selectChatRoom(geohash) {
     
     // Add to recently joined rooms
     addToRecentlyJoinedRooms(geohash);
+    
+    // Load draft message for this room
+    const messageInput = document.getElementById('new-message');
+    if (messageInput) {
+        const draft = localStorage.getItem(`draft_${geohash}`);
+        if (draft) {
+            messageInput.value = draft;
+        }
+    }
     
     // Navigate to chat state with room information
     navigateToChat(geohash, `Room ${geohash}`);
