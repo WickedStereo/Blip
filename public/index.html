@@ -28,6 +28,9 @@
     </header>
 
     <main id="main-content" role="main">
+        <!-- Live region for dynamic announcements -->
+        <div id="live-announcements" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+        
         <div class="sidebar" role="complementary" aria-label="Chat room controls">
             <div id="user-info" class="card">
                 <h3>Your Profile</h3>
@@ -107,7 +110,12 @@
                         </button>
                         <h2 class="chat-title">Select a Chat Room</h2>
                     </div>
-                    <div id="user-count" aria-live="polite">0 online</div>
+                    <div class="chat-actions">
+                        <button id="copy-room-link-btn" class="btn btn-secondary btn-sm" title="Copy room link" style="display: none;" aria-label="Copy room link">
+                            <span aria-hidden="true">🔗</span> Copy Link
+                        </button>
+                        <div id="user-count" aria-live="polite">0 online</div>
+                    </div>
                 </div>
                 
                 <div id="messages" role="log" aria-live="polite" aria-label="Chat messages">

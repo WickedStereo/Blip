@@ -57,6 +57,7 @@ let lastKnownPosition = null;
 document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
     initializeNavigation();
+    handleUrlParameters(); // Handle URL parameters for room joining
     handleAnonymousAuth();
     setupLocationListener();
     setupRoomSelectionListener();
@@ -73,6 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setupNotificationSystem();
     setupKeyboardShortcuts();
     setupBackButton();
+    setupCopyRoomLink();
+    checkForFirstVisit(); // Show onboarding for new users
 });
 
 // Recently Joined Rooms Management
@@ -165,6 +168,150 @@ function setupRecentlyJoinedRooms() {
     updateRecentlyJoinedRoomsDisplay();
 }
 
+// Check if this is the user's first visit and show onboarding
+function checkForFirstVisit() {
+    const hasVisited = localStorage.getItem('hasVisitedBlipz');
+    if (!hasVisited) {
+        // Delay onboarding slightly to let the page load
+        setTimeout(() => {
+            showOnboardingModal();
+        }, 1000);
+    }
+}
+
+// Show onboarding modal for new users
+function showOnboardingModal() {
+    const onboardingModal = document.createElement('div');
+    onboardingModal.classList.add('modal-overlay');
+    onboardingModal.setAttribute('role', 'dialog');
+    onboardingModal.setAttribute('aria-labelledby', 'onboarding-title');
+    onboardingModal.setAttribute('aria-describedby', 'onboarding-content');
+    
+    onboardingModal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="onboarding-title">Welcome to Blipz! 💬</h2>
+                <button class="modal-close" aria-label="Close welcome guide">×</button>
+            </div>
+            <div id="onboarding-content" class="modal-body">
+                <div class="onboarding-section">
+                    <h3>🛡️ Privacy-First Location Chat</h3>
+                    <p>Blipz uses your approximate location to connect you with nearby people without sharing your exact coordinates. Your GPS data never leaves your device.</p>
+                </div>
+                
+                <div class="onboarding-section">
+                    <h3>🔐 How It Works</h3>
+                    <ul>
+                        <li><strong>Anonymous:</strong> No sign-up required</li>
+                        <li><strong>Location-based:</strong> Chat with people in your area</li>
+                        <li><strong>Private:</strong> Only approximate location is shared</li>
+                        <li><strong>Temporary:</strong> Messages are deleted after 24 hours</li>
+                    </ul>
+                </div>
+                
+                <div class="onboarding-section">
+                    <h3>🚀 Getting Started</h3>
+                    <ol>
+                        <li>Allow location access when prompted</li>
+                        <li>Join an existing room or create a new one</li>
+                        <li>Start chatting with nearby people</li>
+                        <li>Share room links to invite specific people</li>
+                    </ol>
+                </div>
+                
+                <div class="onboarding-section">
+                    <h3>⌨️ Quick Tips</h3>
+                    <ul>
+                        <li>Press <kbd>?</kbd> to see keyboard shortcuts</li>
+                        <li>Press <kbd>R</kbd> to quickly join a room</li>
+                        <li>Use <kbd>Shift + Enter</kbd> for new lines in messages</li>
+                        <li>Toggle dark mode with <kbd>T</kbd></li>
+                    </ul>
+                </div>
+                
+                <div class="onboarding-actions">
+                    <button class="btn btn-primary onboarding-continue">Get Started</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(onboardingModal);
+    
+    // Mark as visited
+    localStorage.setItem('hasVisitedBlipz', 'true');
+    
+    // Focus the continue button
+    const continueButton = onboardingModal.querySelector('.onboarding-continue');
+    const closeButton = onboardingModal.querySelector('.modal-close');
+    
+    if (continueButton) {
+        continueButton.focus();
+        
+        continueButton.addEventListener('click', () => {
+            document.body.removeChild(onboardingModal);
+            // Focus the room input to get started
+            const roomInput = document.getElementById('room-id-input');
+            if (roomInput) {
+                roomInput.focus();
+            }
+        });
+    }
+    
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            document.body.removeChild(onboardingModal);
+        });
+    }
+    
+    // Close modal on overlay click or Escape key
+    onboardingModal.addEventListener('click', (e) => {
+        if (e.target === onboardingModal) {
+            document.body.removeChild(onboardingModal);
+        }
+    });
+    
+    document.addEventListener('keydown', function escapeHandler(e) {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            document.body.removeChild(onboardingModal);
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    });
+}
+
+// Handle URL parameters for direct room joining
+function handleUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomParam = urlParams.get('room');
+    
+    if (roomParam) {
+        // Validate room ID format (should be 6 characters)
+        if (roomParam.length === 6) {
+            // Wait for authentication and then join the room
+            setTimeout(() => {
+                if (auth && auth.currentUser) {
+                    selectChatRoom(roomParam);
+                    showNotification(`Joining room from link: ${roomParam}`, 'info');
+                } else {
+                    // Try again after a short delay if auth is not ready
+                    setTimeout(() => {
+                        if (auth && auth.currentUser) {
+                            selectChatRoom(roomParam);
+                            showNotification(`Joining room from link: ${roomParam}`, 'info');
+                        }
+                    }, 1000);
+                }
+            }, 500);
+        } else {
+            showNotification('Invalid room ID in URL. Room IDs must be 6 characters.', 'error');
+        }
+        
+        // Clean up URL without refreshing page
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
 // ===========================================
 // TWO-LEVEL NAVIGATION SYSTEM
 // ===========================================
@@ -203,6 +350,9 @@ function setNavigationState(state, options = {}) {
         // Handle back button
         handleBackButton();
         
+        // Handle chat action buttons
+        handleChatActionButtons();
+        
         // Update chat title if entering chat state
         if (state === 'chat' && options.roomId) {
             updateChatTitle(options.roomId);
@@ -231,6 +381,20 @@ function handleBackButton() {
         } else {
             // Hide our header back button
             backButton.style.display = 'none';
+        }
+    }
+}
+
+function handleChatActionButtons() {
+    const copyRoomLinkBtn = document.getElementById('copy-room-link-btn');
+    
+    if (copyRoomLinkBtn) {
+        if (currentNavState === 'chat') {
+            // Show copy room link button
+            copyRoomLinkBtn.style.display = 'flex';
+        } else {
+            // Hide copy room link button
+            copyRoomLinkBtn.style.display = 'none';
         }
     }
 }
@@ -307,6 +471,134 @@ function setupKeyboardShortcuts() {
                     }
                 }
                 break;
+                
+            case 't':
+                // 't' key to toggle theme
+                if (!event.ctrlKey && !event.metaKey) {
+                    event.preventDefault();
+                    const themeToggle = document.getElementById('theme-toggle');
+                    if (themeToggle) themeToggle.click();
+                }
+                break;
+                
+            case 's':
+                // 's' key to toggle sound
+                if (!event.ctrlKey && !event.metaKey) {
+                    event.preventDefault();
+                    const soundToggle = document.getElementById('sound-toggle');
+                    if (soundToggle) soundToggle.click();
+                }
+                break;
+                
+            case '?':
+                // '?' key to show keyboard shortcuts help
+                if (!event.ctrlKey && !event.metaKey) {
+                    event.preventDefault();
+                    showKeyboardShortcutsHelp();
+                }
+                break;
+        }
+    });
+}
+
+// Show keyboard shortcuts help modal
+function showKeyboardShortcutsHelp() {
+    const helpModal = document.createElement('div');
+    helpModal.classList.add('modal-overlay');
+    helpModal.setAttribute('role', 'dialog');
+    helpModal.setAttribute('aria-labelledby', 'shortcuts-title');
+    helpModal.setAttribute('aria-describedby', 'shortcuts-content');
+    
+    helpModal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="shortcuts-title">Keyboard Shortcuts</h2>
+                <button class="modal-close" aria-label="Close shortcuts help">×</button>
+            </div>
+            <div id="shortcuts-content" class="modal-body">
+                <div class="shortcuts-section">
+                    <h3>Global Shortcuts</h3>
+                    <div class="shortcut-item">
+                        <kbd>?</kbd>
+                        <span>Show this help</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>T</kbd>
+                        <span>Toggle dark/light theme</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>S</kbd>
+                        <span>Toggle sound notifications</span>
+                    </div>
+                </div>
+                
+                <div class="shortcuts-section">
+                    <h3>Room Selection</h3>
+                    <div class="shortcut-item">
+                        <kbd>R</kbd>
+                        <span>Focus room ID input</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Enter</kbd>
+                        <span>Join room (when room ID focused)</span>
+                    </div>
+                </div>
+                
+                <div class="shortcuts-section">
+                    <h3>Chat Interface</h3>
+                    <div class="shortcut-item">
+                        <kbd>M</kbd>
+                        <span>Focus message input</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Enter</kbd>
+                        <span>Send message</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Shift + Enter</kbd>
+                        <span>New line in message</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Escape</kbd>
+                        <span>Return to room selection</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(helpModal);
+    
+    // Focus the modal for keyboard navigation
+    const closeButton = helpModal.querySelector('.modal-close');
+    if (closeButton) {
+        closeButton.focus();
+        
+        // Close modal on click or Enter/Space
+        closeButton.addEventListener('click', () => {
+            document.body.removeChild(helpModal);
+        });
+        
+        closeButton.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                document.body.removeChild(helpModal);
+            }
+        });
+    }
+    
+    // Close modal on overlay click or Escape key
+    helpModal.addEventListener('click', (e) => {
+        if (e.target === helpModal) {
+            document.body.removeChild(helpModal);
+        }
+    });
+    
+    document.addEventListener('keydown', function escapeHandler(e) {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            document.body.removeChild(helpModal);
+            document.removeEventListener('keydown', escapeHandler);
         }
     });
 }
@@ -398,6 +690,52 @@ function displayMessageReactions(messageElement, messageId) {
             
             reactionsContainer.appendChild(reactionBtn);
         });
+    });
+}
+
+// Confirmation Dialog utility
+function showConfirmationDialog(message, onConfirm, onCancel = null) {
+    return new Promise((resolve) => {
+        const confirmed = confirm(message);
+        if (confirmed) {
+            if (onConfirm) onConfirm();
+            resolve(true);
+        } else {
+            if (onCancel) onCancel();
+            resolve(false);
+        }
+    });
+}
+
+// Copy Room Link functionality
+function setupCopyRoomLink() {
+    const copyRoomLinkBtn = document.getElementById('copy-room-link-btn');
+    if (!copyRoomLinkBtn) {
+        console.warn('Copy room link button not found');
+        return;
+    }
+
+    copyRoomLinkBtn.addEventListener('click', async () => {
+        if (!activeChatRoom) {
+            showNotification('No active room to copy link for.', 'warning');
+            return;
+        }
+
+        const roomUrl = `${window.location.origin}${window.location.pathname}?room=${activeChatRoom}`;
+        
+        try {
+            await navigator.clipboard.writeText(roomUrl);
+            showNotification('Room link copied to clipboard!', 'success');
+        } catch (error) {
+            // Fallback for browsers that don't support clipboard API
+            const textarea = document.createElement('textarea');
+            textarea.value = roomUrl;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showNotification('Room link copied to clipboard!', 'success');
+        }
     });
 }
 
@@ -498,11 +836,15 @@ function playNotificationSound() {
 
 // Notification System
 function showNotification(message, type = 'info', duration = 3000) {
+    // Show visual notification
     const notification = document.createElement('div');
     notification.classList.add('notification', type);
     notification.textContent = message;
     
     document.body.appendChild(notification);
+    
+    // Announce to screen readers
+    announceToScreenReader(message);
     
     setTimeout(() => {
         notification.style.animation = 'slideOutRight 0.3s ease-out';
@@ -512,6 +854,18 @@ function showNotification(message, type = 'info', duration = 3000) {
             }
         }, 300);
     }, duration);
+}
+
+// Announce important messages to screen readers
+function announceToScreenReader(message) {
+    const liveRegion = document.getElementById('live-announcements');
+    if (liveRegion) {
+        liveRegion.textContent = message;
+        // Clear after a short delay to reset for next announcement
+        setTimeout(() => {
+            liveRegion.textContent = '';
+        }, 1000);
+    }
 }
 
 function setupNotificationSystem() {
@@ -662,21 +1016,73 @@ function setupJoinByIdListener() {
     const joinBtn = document.getElementById('join-by-id-btn');
     const input = document.getElementById('room-id-input');
 
-    joinBtn.addEventListener('click', () => {
+    joinBtn.addEventListener('click', async () => {
         const roomId = input.value.trim();
-        if (roomId) {
+        
+        // Validate room ID
+        const validationResult = validateRoomId(roomId);
+        if (!validationResult.valid) {
+            showNotification(validationResult.message, 'error');
+            input.focus();
+            return;
+        }
+        
+        // Add loading state
+        const originalText = joinBtn.textContent;
+        joinBtn.disabled = true;
+        joinBtn.textContent = 'Joining...';
+        
+        try {
             // For testing navigation without Firebase
             if (typeof firebase === 'undefined') {
-                // Test navigation directly
+                // Test navigation directly and set active room
+                activeChatRoom = roomId;
                 navigateToChat(roomId, `Test Room ${roomId}`);
                 input.value = '';
-                return;
+            } else {
+                await selectChatRoom(roomId);
+                input.value = '';
             }
-            
-            selectChatRoom(roomId);
-            input.value = '';
+        } finally {
+            // Reset button state
+            joinBtn.disabled = false;
+            joinBtn.textContent = originalText;
         }
     });
+    
+    // Add real-time validation feedback
+    input.addEventListener('input', () => {
+        const roomId = input.value.trim();
+        const validationResult = validateRoomId(roomId);
+        
+        // Visual feedback
+        input.classList.remove('valid', 'invalid');
+        if (roomId.length > 0) {
+            input.classList.add(validationResult.valid ? 'valid' : 'invalid');
+        }
+        
+        // Update join button state
+        joinBtn.disabled = !validationResult.valid;
+    });
+}
+
+// Validate room ID input
+function validateRoomId(roomId) {
+    if (!roomId || roomId.length === 0) {
+        return { valid: false, message: 'Please enter a room ID.' };
+    }
+    
+    if (roomId.length !== 6) {
+        return { valid: false, message: 'Room ID must be exactly 6 characters long.' };
+    }
+    
+    // Check for valid characters (alphanumeric)
+    const validChars = /^[a-zA-Z0-9]+$/;
+    if (!validChars.test(roomId)) {
+        return { valid: false, message: 'Room ID can only contain letters and numbers.' };
+    }
+    
+    return { valid: true, message: 'Valid room ID' };
 }
 
 async function ensureUserProfile(user) {
@@ -914,6 +1320,30 @@ function setupMessageSending() {
             newSendButton.click();
         }
     });
+
+    // Auto-save draft messages
+    newMessageInput.addEventListener('input', () => {
+        if (activeChatRoom) {
+            localStorage.setItem(`draft_${activeChatRoom}`, newMessageInput.value);
+        }
+    });
+
+    // Load draft message when entering a room
+    function loadDraftMessage() {
+        if (activeChatRoom) {
+            const draft = localStorage.getItem(`draft_${activeChatRoom}`);
+            if (draft) {
+                newMessageInput.value = draft;
+            }
+        }
+    }
+
+    // Clear draft when message is sent
+    const originalSendMessage = window.sendMessage;
+    window.sendMessage = function(geohash, text) {
+        originalSendMessage(geohash, text);
+        localStorage.removeItem(`draft_${geohash}`);
+    };
 }
 
 function updateTypingStatus(isTyping) {
@@ -1009,6 +1439,15 @@ async function selectChatRoom(geohash) {
     
     // Add to recently joined rooms
     addToRecentlyJoinedRooms(geohash);
+    
+    // Load draft message for this room
+    const messageInput = document.getElementById('new-message');
+    if (messageInput) {
+        const draft = localStorage.getItem(`draft_${geohash}`);
+        if (draft) {
+            messageInput.value = draft;
+        }
+    }
     
     // Navigate to chat state with room information
     navigateToChat(geohash, `Room ${geohash}`);
@@ -1275,9 +1714,8 @@ function getAndGeohashLocation() {
             console.log(`Geohash updated: ${userGeohash}`);
             geohashElement.textContent = userGeohash;
 
-            const initialRadius = document.getElementById('radius-input').value;
-            showRoomSearchLoading();
-            discoverRoomsByKmRadius(lastKnownPosition, parseFloat(initialRadius));
+            // Only do automatic room discovery on first load, not on periodic updates
+            // Users can manually search for rooms using the Search button
 
         }, error => {
             console.error("Geolocation error:", error);
