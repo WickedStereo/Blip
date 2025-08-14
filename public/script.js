@@ -1070,16 +1070,39 @@ function setupRadiusSearch() {
     const radiusInput = document.getElementById('radius-input');
 
     searchBtn.addEventListener('click', () => {
-        const radiusKm = parseFloat(radiusInput.value);
-        if (lastKnownPosition && radiusKm > 0) {
-            showRoomSearchLoading();
-            showNotification(`Searching for rooms within ${radiusKm}km...`, 'info', 2000);
-            discoverRoomsByKmRadius(lastKnownPosition, radiusKm);
-        } else if (!lastKnownPosition) {
-            showNotification('Location not available. Please enable location services.', 'error');
-        } else {
-            showNotification('Please enter a valid radius.', 'error');
+        const radiusValue = radiusInput.value.trim();
+        const validationResult = validateRadius(radiusValue);
+        
+        if (!validationResult.valid) {
+            showNotification(validationResult.message, 'error');
+            radiusInput.focus();
+            return;
         }
+        
+        const radiusKm = parseFloat(radiusValue);
+        if (!lastKnownPosition) {
+            showNotification('Location not available. Please enable location services.', 'error');
+            return;
+        }
+        
+        showRoomSearchLoading();
+        showNotification(`Searching for rooms within ${radiusKm}km...`, 'info', 2000);
+        discoverRoomsByKmRadius(lastKnownPosition, radiusKm);
+    });
+
+    // Add real-time validation feedback
+    radiusInput.addEventListener('input', () => {
+        const radiusValue = radiusInput.value.trim();
+        const validationResult = validateRadius(radiusValue);
+        
+        // Visual feedback
+        radiusInput.classList.remove('valid', 'invalid');
+        if (radiusValue.length > 0) {
+            radiusInput.classList.add(validationResult.valid ? 'valid' : 'invalid');
+        }
+        
+        // Update search button state
+        searchBtn.disabled = !validationResult.valid || !lastKnownPosition;
     });
 
     // Also allow Enter key to trigger search
@@ -1241,15 +1264,39 @@ function setupMapOverlayControls() {
 
     if (radiusBtn && radiusInput) {
         radiusBtn.addEventListener('click', () => {
-            const radiusKm = parseFloat(radiusInput.value);
-            if (lastKnownPosition && radiusKm > 0) {
-                discoverRoomsByKmRadius(lastKnownPosition, radiusKm);
-            } else if (!lastKnownPosition) {
-                showNotification('Location not available. Please enable location services.', 'error');
-            } else {
-                showNotification('Please enter a valid radius.', 'error');
+            const radiusValue = radiusInput.value.trim();
+            const validationResult = validateRadius(radiusValue);
+            
+            if (!validationResult.valid) {
+                showNotification(validationResult.message, 'error');
+                radiusInput.focus();
+                return;
             }
+            
+            const radiusKm = parseFloat(radiusValue);
+            if (!lastKnownPosition) {
+                showNotification('Location not available. Please enable location services.', 'error');
+                return;
+            }
+            
+            discoverRoomsByKmRadius(lastKnownPosition, radiusKm);
         });
+        
+        // Add real-time validation feedback for map overlay radius input
+        radiusInput.addEventListener('input', () => {
+            const radiusValue = radiusInput.value.trim();
+            const validationResult = validateRadius(radiusValue);
+            
+            // Visual feedback
+            radiusInput.classList.remove('valid', 'invalid');
+            if (radiusValue.length > 0) {
+                radiusInput.classList.add(validationResult.valid ? 'valid' : 'invalid');
+            }
+            
+            // Update search button state
+            radiusBtn.disabled = !validationResult.valid || !lastKnownPosition;
+        });
+        
         radiusInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') radiusBtn.click(); });
     }
 }
@@ -1271,6 +1318,25 @@ function validateRoomId(roomId) {
     }
     
     return { valid: true, message: 'Valid room ID' };
+}
+
+// Validate radius input
+function validateRadius(radius) {
+    const radiusNum = parseFloat(radius);
+    
+    if (!radius || isNaN(radiusNum)) {
+        return { valid: false, message: 'Please enter a valid radius.' };
+    }
+    
+    if (radiusNum < 1) {
+        return { valid: false, message: 'Radius must be at least 1 km.' };
+    }
+    
+    if (radiusNum > 50) {
+        return { valid: false, message: 'Radius cannot exceed 50 km.' };
+    }
+    
+    return { valid: true, message: 'Valid radius' };
 }
 
 async function ensureUserProfile(user) {
