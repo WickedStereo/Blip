@@ -522,6 +522,13 @@ main {
     line-height: var(--line-height-normal);
 }
 
+.help-text {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-top: calc(var(--space-1) * 0.5);
+    line-height: 1.4;
+}
+
 .shortcut-hint {
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-normal);
