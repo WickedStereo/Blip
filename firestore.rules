@@ -4,11 +4,17 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Chat rooms can be read by any authenticated user.
-    // A user can create a room, but cannot update or delete it.
+    // A user can create a room and update lastActiveAt, but cannot delete it.
     match /chatRooms/{geohash} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null && incomingData().geohash == geohash && incomingData().createdAt == request.time;
-      allow update, delete: if false; // Nobody can update or delete from the client
+      allow create: if request.auth != null 
+                    && incomingData().geohash == geohash 
+                    && incomingData().createdAt == request.time
+                    && incomingData().lastActiveAt == request.time;
+      allow update: if request.auth != null 
+                    && request.resource.data.keys().hasAny(['lastActiveAt', 'messageCount'])
+                    && incomingData().lastActiveAt == request.time;
+      allow delete: if false; // Nobody can delete from the client
 
       // A user can read messages in any room.
       // They can only create messages, and only as themselves.

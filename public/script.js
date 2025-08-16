@@ -67,11 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAvatarChangeListener();
     setupEmojiPicker();
     setupJoinByIdListener();
+    initializeGeohashPopup();
     setupMapOverlayControls();
     setupRadiusSearch();
     setupThemeToggle();
     setupSoundToggle();
     setupAutoResizeTextarea();
+    setupMapRecenterButton();
+    setupMapFilters();
     setupRecentlyJoinedRooms();
     setupNotificationSystem();
     setupKeyboardShortcuts();
@@ -79,6 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCopyRoomLink();
     checkForFirstVisit(); // Show onboarding for new users
 });
+
+// Global map reference for location reset functionality
+let globalMap = null;
 
 // Map Initialization (Leaflet) — scaffold for Milestone 1
 function initializeMap() {
@@ -91,6 +97,7 @@ function initializeMap() {
         if (!mapEl) return;
 
         const map = L.map('map', { zoomControl: true });
+        globalMap = map; // Store global reference
         // Default center roughly; will recenter when location is available
         map.setView([37.7749, -122.4194], 12);
 
@@ -99,13 +106,42 @@ function initializeMap() {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // Hook: when user moves/zooms, re-render with debounce
+        // Hook: when user moves/zooms, re-render with optimized debouncing
         let overlayUpdateTimer = null;
+        let quickUpdateTimer = null;
+        let lastBounds = null;
+        let lastZoom = null;
+        
+        // Quick updates during movement for smooth panning
+        const scheduleQuickUpdate = () => {
+            if (quickUpdateTimer) clearTimeout(quickUpdateTimer);
+            quickUpdateTimer = setTimeout(() => {
+                // Only update if bounds or zoom changed significantly
+                const currentBounds = map.getBounds();
+                const currentZoom = map.getZoom();
+                
+                if (shouldUpdateOverlays(lastBounds, lastZoom, currentBounds, currentZoom)) {
+                    renderVisibleGeohashOverlays(map);
+                    lastBounds = currentBounds;
+                    lastZoom = currentZoom;
+                }
+            }, 100); // Faster response for smooth panning
+        };
+        
+        // Full updates after movement stops
         const scheduleOverlayRender = () => {
             if (overlayUpdateTimer) clearTimeout(overlayUpdateTimer);
-            overlayUpdateTimer = setTimeout(() => renderVisibleGeohashOverlays(map), 150);
+            overlayUpdateTimer = setTimeout(() => {
+                renderVisibleGeohashOverlays(map);
+                lastBounds = map.getBounds();
+                lastZoom = map.getZoom();
+            }, 150);
         };
-        map.on('moveend', scheduleOverlayRender);
+        
+        // Listen to multiple events for better responsiveness
+        map.on('move', scheduleQuickUpdate);      // Smooth panning
+        map.on('moveend', scheduleOverlayRender); // Final update
+        map.on('zoomend', scheduleOverlayRender); // Zoom changes
 
         // When we get the user's location later, recenter map
         const originalGeohashUpdate = getAndGeohashLocation;
@@ -125,14 +161,50 @@ function initializeMap() {
     }
 }
 
+// Helper function to determine if overlays should be updated (lazy-loading optimization)
+function shouldUpdateOverlays(lastBounds, lastZoom, currentBounds, currentZoom) {
+    // Always update if this is the first time
+    if (!lastBounds || !lastZoom) return true;
+    
+    // Always update if zoom level changed
+    if (Math.abs(currentZoom - lastZoom) >= 1) return true;
+    
+    // Check if the view has moved significantly
+    const threshold = 0.001; // ~100m at typical zoom levels
+    const lastCenter = lastBounds.getCenter();
+    const currentCenter = currentBounds.getCenter();
+    
+    const latDiff = Math.abs(currentCenter.lat - lastCenter.lat);
+    const lngDiff = Math.abs(currentCenter.lng - lastCenter.lng);
+    
+    // Update if moved more than threshold
+    if (latDiff > threshold || lngDiff > threshold) return true;
+    
+    // Check if viewport size changed significantly (window resize)
+    const lastSize = {
+        lat: lastBounds.getNorth() - lastBounds.getSouth(),
+        lng: lastBounds.getEast() - lastBounds.getWest()
+    };
+    const currentSize = {
+        lat: currentBounds.getNorth() - currentBounds.getSouth(),
+        lng: currentBounds.getEast() - currentBounds.getWest()
+    };
+    
+    const sizeThreshold = 0.1; // 10% change
+    if (Math.abs(currentSize.lat - lastSize.lat) / lastSize.lat > sizeThreshold ||
+        Math.abs(currentSize.lng - lastSize.lng) / lastSize.lng > sizeThreshold) {
+        return true;
+    }
+    
+    return false;
+}
+
 // Render geohash 6-character grid overlays within current viewport
 let currentGeohashLayers = [];
+let overlayCache = new Map(); // Cache for overlay data
+
 function renderVisibleGeohashOverlays(map) {
     try {
-        // Clear previous layers
-        currentGeohashLayers.forEach(layer => map.removeLayer(layer));
-        currentGeohashLayers = [];
-
         const bounds = map.getBounds();
         const zoom = map.getZoom();
         const south = bounds.getSouth();
@@ -140,54 +212,362 @@ function renderVisibleGeohashOverlays(map) {
         const north = bounds.getNorth();
         const east = bounds.getEast();
 
-        // Sample a grid of lat/lon to get covering geohashes
-        const latSteps = Math.max(6, Math.floor((north - south) / 0.01));
-        const lonSteps = Math.max(6, Math.floor((east - west) / 0.01));
-        const latStep = (north - south) / latSteps;
-        const lonStep = (east - west) / lonSteps;
-
-        const seen = new Set();
-        for (let i = 0; i <= latSteps; i++) {
-            for (let j = 0; j <= lonSteps; j++) {
-                const lat = south + i * latStep;
-                const lon = west + j * lonStep;
-                const gh = ngeohash.encode(lat, lon, 6);
-                if (seen.has(gh)) continue;
-                seen.add(gh);
-            }
+        // Create cache key for current viewport
+        const cacheKey = `${south.toFixed(4)}-${west.toFixed(4)}-${north.toFixed(4)}-${east.toFixed(4)}-${zoom}`;
+        
+        // Check if we have cached data for this viewport
+        if (overlayCache.has(cacheKey)) {
+            const cachedData = overlayCache.get(cacheKey);
+            // Update timestamp for LRU cleanup
+            cachedData.lastUsed = Date.now();
+            
+            // Use cached geohashes but refresh active status
+            renderCachedOverlays(map, cachedData.geohashes);
+            return;
         }
 
-        const geohashes = Array.from(seen).slice(0, 150);
-        fetchActiveRoomsByGeohash(geohashes).then(activeSet => {
-            geohashes.forEach(gh => {
-                const isActive = activeSet.has(gh);
-                const b = ngeohash.bounds(gh);
-                const rect = L.rectangle([[b.south, b.west], [b.north, b.east]], {
-                    color: isActive ? 'rgba(16,185,129,0.9)' : 'rgba(99,102,241,0.6)',
-                    weight: 1,
-                    fillColor: isActive ? 'rgba(16,185,129,0.2)' : 'rgba(99,102,241,0.12)',
-                    fillOpacity: 0.2
-                });
-                rect.addTo(map);
-                currentGeohashLayers.push(rect);
-
-                const center = ngeohash.decode(gh);
-                const label = L.marker([center.latitude, center.longitude], {
-                    icon: L.divIcon({
-                        className: 'geohash-label',
-                        html: `<div class="gh-label ${isActive ? 'active' : 'inactive'}" role="button" tabindex="0" aria-label="${isActive ? 'Enter room ' : 'Create room '} ${gh}">${gh}</div>`,
-                        iconSize: null
-                    })
-                });
-                label.addTo(map);
-                label.on('click', () => selectChatRoom(gh));
-                label.on('keypress', (e) => { if (e.originalEvent.key === 'Enter') selectChatRoom(gh); });
-                currentGeohashLayers.push(label);
-            });
+        // Calculate visible geohashes more efficiently
+        const visibleGeohashes = calculateVisibleGeohashes(bounds, zoom);
+        
+        // Cache the geohashes for this viewport
+        overlayCache.set(cacheKey, {
+            geohashes: visibleGeohashes,
+            lastUsed: Date.now()
         });
+        
+        // Clean up old cache entries (keep last 20)
+        if (overlayCache.size > 20) {
+            const entries = Array.from(overlayCache.entries())
+                .sort((a, b) => b[1].lastUsed - a[1].lastUsed);
+            
+            // Keep only the 15 most recent entries
+            overlayCache.clear();
+            entries.slice(0, 15).forEach(([key, value]) => {
+                overlayCache.set(key, value);
+            });
+        }
+
+        // Render overlays with active status
+        renderCachedOverlays(map, visibleGeohashes);
+        
     } catch (e) {
         console.warn('renderVisibleGeohashOverlays error:', e);
     }
+}
+
+function calculateVisibleGeohashes(bounds, zoom) {
+    const south = bounds.getSouth();
+    const west = bounds.getWest();
+    const north = bounds.getNorth();
+    const east = bounds.getEast();
+    
+    // Adaptive grid resolution based on zoom level
+    const gridFactor = Math.max(0.005, 0.02 / Math.pow(2, zoom - 10));
+    const latSteps = Math.max(4, Math.min(20, Math.floor((north - south) / gridFactor)));
+    const lonSteps = Math.max(4, Math.min(20, Math.floor((east - west) / gridFactor)));
+    
+    const latStep = (north - south) / latSteps;
+    const lonStep = (east - west) / lonSteps;
+
+    const seen = new Set();
+    for (let i = 0; i <= latSteps; i++) {
+        for (let j = 0; j <= lonSteps; j++) {
+            const lat = south + i * latStep;
+            const lon = west + j * lonStep;
+            const gh = ngeohash.encode(lat, lon, 6);
+            seen.add(gh);
+        }
+    }
+
+    return Array.from(seen).slice(0, 100); // Limit for performance
+}
+
+async function renderCachedOverlays(map, geohashes) {
+    // Clear previous layers efficiently
+    currentGeohashLayers.forEach(layer => map.removeLayer(layer));
+    currentGeohashLayers = [];
+
+    // Batch fetch enhanced room data (with caching)
+    const roomDataMap = await fetchActiveRoomsByGeohashCached(geohashes);
+    
+    // Filter geohashes based on current filter settings
+    const filteredGeohashes = geohashes.filter(gh => {
+        const roomData = roomDataMap.get(gh) || { isActive: false, activityType: 'inactive' };
+        return shouldShowGeohash(roomData);
+    });
+    
+    // Render overlays in batches for better performance
+    const batchSize = 20;
+    for (let i = 0; i < filteredGeohashes.length; i += batchSize) {
+        const batch = filteredGeohashes.slice(i, i + batchSize);
+        
+        // Use requestAnimationFrame to prevent blocking
+        await new Promise(resolve => {
+            requestAnimationFrame(() => {
+                batch.forEach(gh => {
+                    const roomData = roomDataMap.get(gh) || { isActive: false, activityType: 'inactive', userCount: 0 };
+                    renderSingleOverlay(map, gh, roomData);
+                });
+                resolve();
+            });
+        });
+    }
+}
+
+function shouldShowGeohash(roomData) {
+    const { isActive, activityType } = roomData;
+    
+    // Always show inactive spots if no filters are active
+    if (!isActive && !currentFilters.active && !currentFilters.trending && !currentFilters.new) {
+        return true;
+    }
+    
+    // Check specific filters
+    if (currentFilters.active && activityType === 'active') return true;
+    if (currentFilters.trending && activityType === 'trending') return true;
+    if (currentFilters.new && activityType === 'new') return true;
+    
+    // Show inactive spots if active filter is enabled (to show available locations)
+    if (currentFilters.active && !isActive) return true;
+    
+    return false;
+}
+
+function renderSingleOverlay(map, geohash, roomData) {
+    const { isActive, activityType, userCount } = roomData;
+    const bounds = ngeohash.bounds(geohash);
+    
+    // Get colors based on activity type and heat level
+    const { borderColor, fillColor, opacity } = getActivityColors(activityType, userCount);
+    
+    // Create rectangle overlay with heat-based styling
+    const rect = L.rectangle([[bounds.south, bounds.west], [bounds.north, bounds.east]], {
+        color: borderColor,
+        weight: activityType === 'trending' ? 2 : 1,
+        fillColor: fillColor,
+        fillOpacity: opacity
+    });
+    rect.addTo(map);
+    currentGeohashLayers.push(rect);
+
+    // Create label marker with activity styling
+    const center = ngeohash.decode(geohash);
+    const activityEmoji = getActivityEmoji(activityType);
+    const userCountDisplay = userCount > 0 ? ` (${userCount})` : '';
+    
+    const label = L.marker([center.latitude, center.longitude], {
+        icon: L.divIcon({
+            className: 'geohash-label',
+            html: `<div class="gh-label ${activityType}" role="button" tabindex="0" aria-label="${getAriaLabel(activityType, geohash, userCount)}">${activityEmoji}${geohash}${userCountDisplay}</div>`,
+            iconSize: null
+        })
+    });
+    label.addTo(map);
+    label.on('click', () => showGeohashPopup(geohash, isActive, roomData));
+    label.on('keypress', (e) => { 
+        if (e.originalEvent.key === 'Enter') showGeohashPopup(geohash, isActive, roomData); 
+    });
+    currentGeohashLayers.push(label);
+}
+
+function getActivityColors(activityType, userCount) {
+    const heatMultiplier = Math.min(userCount / 10, 1); // Scale heat based on user count
+    
+    switch (activityType) {
+        case 'trending':
+            return {
+                borderColor: 'rgba(251, 146, 60, 0.9)',
+                fillColor: `rgba(251, 146, 60, ${0.2 + heatMultiplier * 0.4})`,
+                opacity: 0.3 + heatMultiplier * 0.3
+            };
+        case 'new':
+            return {
+                borderColor: 'rgba(168, 85, 247, 0.9)',
+                fillColor: `rgba(168, 85, 247, ${0.2 + heatMultiplier * 0.4})`,
+                opacity: 0.3 + heatMultiplier * 0.3
+            };
+        case 'active':
+            return {
+                borderColor: 'rgba(16, 185, 129, 0.9)',
+                fillColor: `rgba(16, 185, 129, ${0.2 + heatMultiplier * 0.4})`,
+                opacity: 0.3 + heatMultiplier * 0.3
+            };
+        default: // inactive
+            return {
+                borderColor: 'rgba(99, 102, 241, 0.6)',
+                fillColor: 'rgba(99, 102, 241, 0.12)',
+                opacity: 0.2
+            };
+    }
+}
+
+function getActivityEmoji(activityType) {
+    switch (activityType) {
+        case 'trending': return '🔥';
+        case 'new': return '✨';
+        case 'active': return '🟢';
+        default: return '';
+    }
+}
+
+function getAriaLabel(activityType, geohash, userCount) {
+    const userText = userCount > 0 ? ` with ${userCount} users` : '';
+    switch (activityType) {
+        case 'trending': return `Trending room ${geohash}${userText}`;
+        case 'new': return `New room ${geohash}${userText}`;
+        case 'active': return `Active room ${geohash}${userText}`;
+        default: return `Create room ${geohash}`;
+    }
+}
+
+// Cache for active room status
+let activeRoomCache = new Map();
+const ACTIVE_ROOM_CACHE_TTL = 30000; // 30 seconds
+
+async function fetchActiveRoomsByGeohashCached(geohashes) {
+    const roomData = new Map(); // geohash -> { isActive, activityType, userCount, lastActiveAt }
+    const uncachedGeohashes = [];
+    const now = Date.now();
+    
+    // Check cache first
+    geohashes.forEach(gh => {
+        const cached = activeRoomCache.get(gh);
+        if (cached && (now - cached.timestamp) < ACTIVE_ROOM_CACHE_TTL) {
+            roomData.set(gh, cached.data || { isActive: cached.isActive, activityType: 'inactive', userCount: 0 });
+        } else {
+            uncachedGeohashes.push(gh);
+        }
+    });
+    
+    // Fetch uncached geohashes with enhanced data
+    if (uncachedGeohashes.length > 0) {
+        const freshRoomData = await fetchEnhancedRoomData(uncachedGeohashes);
+        
+        // Update cache
+        uncachedGeohashes.forEach(gh => {
+            const data = freshRoomData.get(gh) || { isActive: false, activityType: 'inactive', userCount: 0 };
+            activeRoomCache.set(gh, {
+                isActive: data.isActive,
+                data: data,
+                timestamp: now
+            });
+            roomData.set(gh, data);
+        });
+        
+        // Clean up old cache entries
+        if (activeRoomCache.size > 500) {
+            const cutoff = now - ACTIVE_ROOM_CACHE_TTL;
+            for (const [key, value] of activeRoomCache.entries()) {
+                if (value.timestamp < cutoff) {
+                    activeRoomCache.delete(key);
+                }
+            }
+        }
+    }
+    
+    return roomData;
+}
+
+async function fetchEnhancedRoomData(geohashes) {
+    const roomDataMap = new Map();
+    
+    try {
+        if (!db || !db.collection) return roomDataMap;
+        
+        for (let i = 0; i < geohashes.length; i += 10) {
+            const chunk = geohashes.slice(i, i + 10);
+            const roomsSnap = await db.collection('chatRooms').where('geohash', 'in', chunk).get();
+            
+            // Process each room to determine activity type
+            for (const roomDoc of roomsSnap.docs) {
+                const roomData = roomDoc.data();
+                const geohash = roomData.geohash || roomDoc.id;
+                
+                if (!geohash) continue;
+                
+                // Get user count for this room
+                const userCount = await getRoomUserCount(geohash);
+                
+                // Determine activity type based on timestamps and user activity
+                const activityType = determineActivityType(roomData, userCount);
+                
+                roomDataMap.set(geohash, {
+                    isActive: true,
+                    activityType: activityType,
+                    userCount: userCount,
+                    lastActiveAt: roomData.lastActiveAt,
+                    createdAt: roomData.createdAt
+                });
+            }
+        }
+        
+        // For geohashes not in the database, mark as inactive
+        geohashes.forEach(gh => {
+            if (!roomDataMap.has(gh)) {
+                roomDataMap.set(gh, {
+                    isActive: false,
+                    activityType: 'inactive',
+                    userCount: 0
+                });
+            }
+        });
+        
+    } catch (e) {
+        console.warn('fetchEnhancedRoomData error:', e);
+    }
+    
+    return roomDataMap;
+}
+
+async function getRoomUserCount(geohash) {
+    try {
+        // Count active users (those with recent presence)
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        const usersSnap = await db.collection('chatRooms')
+            .doc(geohash)
+            .collection('users')
+            .where('lastSeen', '>', fiveMinutesAgo)
+            .get();
+        
+        return usersSnap.size;
+    } catch (e) {
+        console.warn('getRoomUserCount error:', e);
+        return 0;
+    }
+}
+
+function determineActivityType(roomData, userCount) {
+    const now = Date.now();
+    const timeWindowMs = currentFilters.timeWindow * 60 * 1000;
+    
+    // Get timestamps
+    const lastActiveAt = roomData.lastActiveAt?.toDate?.() || roomData.lastActiveAt;
+    const createdAt = roomData.createdAt?.toDate?.() || roomData.createdAt;
+    
+    if (!lastActiveAt && !createdAt) return 'inactive';
+    
+    const lastActiveTime = lastActiveAt ? lastActiveAt.getTime() : 0;
+    const createdTime = createdAt ? createdAt.getTime() : 0;
+    
+    // Check if room is new (created within 10 minutes)
+    if (createdTime && (now - createdTime) < 10 * 60 * 1000) {
+        return 'new';
+    }
+    
+    // Check if room is trending (high activity in last 60 minutes)
+    if (lastActiveTime && (now - lastActiveTime) < 60 * 60 * 1000) {
+        // Consider trending if it has multiple users or recent activity
+        if (userCount >= 3 || (userCount >= 2 && (now - lastActiveTime) < 15 * 60 * 1000)) {
+            return 'trending';
+        }
+    }
+    
+    // Check if room is active (within current time window)
+    if (lastActiveTime && (now - lastActiveTime) < timeWindowMs) {
+        return 'active';
+    }
+    
+    return 'inactive';
 }
 
 async function fetchActiveRoomsByGeohash(geohashes) {
@@ -207,6 +587,60 @@ async function fetchActiveRoomsByGeohash(geohashes) {
         console.warn('fetchActiveRoomsByGeohash error:', e);
     }
     return active;
+}
+
+// Enhanced room existence check and creation with proper error handling
+async function checkAndCreateRoom(geohash) {
+    try {
+        const roomRef = db.collection('chatRooms').doc(geohash);
+        const roomDoc = await roomRef.get();
+
+        if (roomDoc.exists) {
+            // Room exists, update lastActiveAt to mark recent activity
+            try {
+                await roomRef.update({
+                    lastActiveAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (updateError) {
+                console.warn('Could not update lastActiveAt:', updateError);
+                // Non-critical error, continue anyway
+            }
+            
+            return {
+                exists: true,
+                wasCreated: false,
+                data: roomDoc.data()
+            };
+        } else {
+            // Room doesn't exist, create it
+            const roomData = {
+                geohash: geohash,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastActiveAt: firebase.firestore.FieldValue.serverTimestamp(),
+                messageCount: 0
+            };
+
+            await roomRef.set(roomData);
+            console.log(`Created new chat room: ${geohash}`);
+            
+            // Invalidate cache for this geohash since we just created the room
+            if (activeRoomCache.has(geohash)) {
+                activeRoomCache.set(geohash, {
+                    isActive: true,
+                    timestamp: Date.now()
+                });
+            }
+            
+            return {
+                exists: false,
+                wasCreated: true,
+                data: roomData
+            };
+        }
+    } catch (error) {
+        console.error('Error checking/creating room:', error);
+        throw new Error(`Database error: ${error.message}`);
+    }
 }
 
 // Recently Joined Rooms Management
@@ -411,35 +845,73 @@ function showOnboardingModal() {
     });
 }
 
-// Handle URL parameters for direct room joining
+// Handle URL parameters and paths for direct room joining
 function handleUrlParameters() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomParam = urlParams.get('room');
+    let geohash = null;
+    let shouldCleanUrl = false;
     
-    if (roomParam) {
-        // Validate room ID format (should be 6 characters)
-        if (roomParam.length === 6) {
-            // Wait for authentication and then join the room
-            setTimeout(() => {
-                if (auth && auth.currentUser) {
-                    selectChatRoom(roomParam);
-                    showNotification(`Joining room from link: ${roomParam}`, 'info');
-                } else {
-                    // Try again after a short delay if auth is not ready
-                    setTimeout(() => {
-                        if (auth && auth.currentUser) {
-                            selectChatRoom(roomParam);
-                            showNotification(`Joining room from link: ${roomParam}`, 'info');
-                        }
-                    }, 1000);
-                }
-            }, 500);
+    // Check for path-based routing: /room/:geohash
+    const path = window.location.pathname;
+    const roomPathMatch = path.match(/^\/room\/([a-zA-Z0-9]{6})$/);
+    if (roomPathMatch) {
+        geohash = roomPathMatch[1];
+        shouldCleanUrl = true;
+    }
+    
+    // Check for query parameters: ?room=xxxxxx or ?g=xxxxxx
+    if (!geohash) {
+        const urlParams = new URLSearchParams(window.location.search);
+        geohash = urlParams.get('room') || urlParams.get('g');
+        shouldCleanUrl = !!geohash;
+    }
+    
+    if (geohash) {
+        // Validate geohash format (should be 6 characters)
+        if (geohash.length === 6 && /^[a-zA-Z0-9]+$/.test(geohash)) {
+            joinRoomFromDeepLink(geohash);
+            
+            // Clean up URL without refreshing page
+            if (shouldCleanUrl) {
+                const cleanUrl = window.location.origin + (window.location.pathname === '/room/' + geohash ? '/' : window.location.pathname.replace('/room/' + geohash, ''));
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
         } else {
             showNotification('Invalid room ID in URL. Room IDs must be 6 characters.', 'error');
         }
-        
-        // Clean up URL without refreshing page
-        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
+// Join room from deep link with proper error handling and user feedback
+function joinRoomFromDeepLink(geohash) {
+    const joinRoom = () => {
+        if (auth && auth.currentUser) {
+            selectChatRoom(geohash);
+            showNotification(`Joining room from link: ${geohash}`, 'info');
+        } else {
+            // Try again after a short delay if auth is not ready
+            setTimeout(() => {
+                if (auth && auth.currentUser) {
+                    selectChatRoom(geohash);
+                    showNotification(`Joining room from link: ${geohash}`, 'info');
+                } else {
+                    showNotification('Authentication not ready. Please try again.', 'warning');
+                }
+            }, 1000);
+        }
+    };
+    
+    // Wait for authentication and then join the room
+    setTimeout(joinRoom, 500);
+}
+
+// Generate deep link URLs for sharing
+function generateRoomDeepLink(geohash, usePathFormat = true) {
+    const baseUrl = window.location.origin;
+    
+    if (usePathFormat) {
+        return `${baseUrl}/room/${geohash}`;
+    } else {
+        return `${baseUrl}/?g=${geohash}`;
     }
 }
 
@@ -852,7 +1324,7 @@ function setupCopyRoomLink() {
             return;
         }
 
-        const roomUrl = `${window.location.origin}${window.location.pathname}?room=${activeChatRoom}`;
+        const roomUrl = generateRoomDeepLink(activeChatRoom);
         
         try {
             await navigator.clipboard.writeText(roomUrl);
@@ -1301,6 +1773,83 @@ function setupMapOverlayControls() {
     }
 }
 
+// Setup map recenter button functionality
+function setupMapRecenterButton() {
+    const recenterBtn = document.getElementById('map-recenter-btn');
+    if (!recenterBtn) {
+        console.warn('Map recenter button not found');
+        return;
+    }
+
+    recenterBtn.addEventListener('click', () => {
+        if (!globalMap) {
+            showNotification('Map not initialized', 'error');
+            return;
+        }
+
+        if (!lastKnownPosition) {
+            showNotification('Location not available. Please enable location services.', 'warning');
+            return;
+        }
+
+        // Animate to user's current location with smooth transition
+        globalMap.setView(
+            [lastKnownPosition.latitude, lastKnownPosition.longitude], 
+            14, 
+            { animate: true, duration: 1.0 }
+        );
+        
+        showNotification('Centered on your location', 'success', 2000);
+    });
+}
+
+// Map Filter System
+let currentFilters = {
+    active: true,
+    trending: false,
+    new: false,
+    timeWindow: 60 // minutes
+};
+
+function setupMapFilters() {
+    const activeFilter = document.getElementById('filter-active');
+    const trendingFilter = document.getElementById('filter-trending');
+    const newFilter = document.getElementById('filter-new');
+    const timeWindow = document.getElementById('time-window');
+
+    if (!activeFilter || !trendingFilter || !newFilter || !timeWindow) {
+        console.warn('Filter elements not found');
+        return;
+    }
+
+    // Set up filter change handlers
+    activeFilter.addEventListener('change', () => {
+        currentFilters.active = activeFilter.checked;
+        refreshMapOverlays();
+    });
+
+    trendingFilter.addEventListener('change', () => {
+        currentFilters.trending = trendingFilter.checked;
+        refreshMapOverlays();
+    });
+
+    newFilter.addEventListener('change', () => {
+        currentFilters.new = newFilter.checked;
+        refreshMapOverlays();
+    });
+
+    timeWindow.addEventListener('change', () => {
+        currentFilters.timeWindow = parseInt(timeWindow.value);
+        refreshMapOverlays();
+    });
+}
+
+function refreshMapOverlays() {
+    if (globalMap) {
+        renderVisibleGeohashOverlays(globalMap);
+    }
+}
+
 // Validate room ID input
 function validateRoomId(roomId) {
     if (!roomId || roomId.length === 0) {
@@ -1641,8 +2190,22 @@ function sendMessage(geohash, text) {
         messageData.replyToText = replyToMessage.text.substring(0, 100); // Limit reply text length
     }
 
+    // Use batch operation to send message and update room activity atomically
+    const batch = db.batch();
+    
+    // Add message to collection
     const messagesRef = db.collection('chatRooms').doc(geohash).collection('messages');
-    messagesRef.add(messageData).catch(error => {
+    const messageRef = messagesRef.doc(); // Get a new document reference
+    batch.set(messageRef, messageData);
+    
+    // Update room's lastActiveAt timestamp
+    const roomRef = db.collection('chatRooms').doc(geohash);
+    batch.update(roomRef, {
+        lastActiveAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Commit the batch
+    batch.commit().catch(error => {
         console.error('Error sending message:', error);
         showNotification('Failed to send message. Please try again.', 'error');
     });
@@ -1665,34 +2228,147 @@ function setupRoomSelectionListener() {
     });
 }
 
-async function selectChatRoom(geohash) {
-    if (messageUnsubscribe) {
-        messageUnsubscribe(); // Stop listening to old room's messages
-    }
-    if (presenceUnsubscribe) {
-        presenceUnsubscribe(); // Stop listening to old room's presence
-    }
-    if (presenceInterval) {
-        clearInterval(presenceInterval); // Stop the old presence updates
-    }
-
-    const roomRef = db.collection('chatRooms').doc(geohash);
-    const roomDoc = await roomRef.get();
-
-    if (!roomDoc.exists) {
-        // Create the room if it doesn't exist
-        await roomRef.set({
-            geohash: geohash,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        console.log(`Created new chat room: ${geohash}`);
-    }
-
-    activeChatRoom = geohash;
-    console.log(`Selected chat room: ${activeChatRoom}`);
+// Geohash popup functionality
+function showGeohashPopup(geohash, isActive, roomData) {
+    const popup = document.getElementById('geohash-popup');
+    const geohashDisplay = document.getElementById('popup-geohash');
+    const statusDisplay = document.getElementById('popup-status');
+    const descriptionDisplay = document.getElementById('popup-description');
+    const enterBtn = document.getElementById('popup-enter-btn');
     
-    // Add to recently joined rooms
-    addToRecentlyJoinedRooms(geohash);
+    // Set geohash
+    geohashDisplay.textContent = geohash;
+    
+    // Use room data if available, fallback to simple active/inactive
+    const { activityType = (isActive ? 'active' : 'inactive'), userCount = 0 } = roomData || {};
+    
+    // Set status and content based on activity type
+    const emoji = getActivityEmoji(activityType) || (isActive ? '🟢' : '🔵');
+    const statusText = getPopupStatusText(activityType, isActive);
+    const description = getPopupDescription(activityType, userCount, isActive);
+    const buttonText = isActive ? 'Enter Room' : 'Create Room';
+    
+    statusDisplay.textContent = `${emoji} ${statusText}`;
+    statusDisplay.className = `popup-status-text ${activityType}`;
+    descriptionDisplay.textContent = description;
+    enterBtn.textContent = buttonText;
+    enterBtn.className = 'btn btn-primary';
+    
+    // Store geohash for button actions
+    enterBtn.dataset.geohash = geohash;
+    
+    // Show popup
+    popup.style.display = 'flex';
+    
+    // Focus on enter button for accessibility
+    setTimeout(() => enterBtn.focus(), 100);
+}
+
+function getPopupStatusText(activityType, isActive) {
+    switch (activityType) {
+        case 'trending': return 'Trending Room';
+        case 'new': return 'New Room';
+        case 'active': return 'Active Room';
+        default: return isActive ? 'Room Available' : 'Available Spot';
+    }
+}
+
+function getPopupDescription(activityType, userCount, isActive) {
+    const userText = userCount > 0 ? ` Currently ${userCount} user${userCount !== 1 ? 's' : ''} online.` : '';
+    
+    switch (activityType) {
+        case 'trending':
+            return `This room is trending with high activity in the last hour.${userText} Click Enter to join the conversation.`;
+        case 'new':
+            return `This room was recently created.${userText} Click Enter to join the conversation.`;
+        case 'active':
+            return `This chat room has recent activity.${userText} Click Enter to join the conversation.`;
+        default:
+            return isActive 
+                ? `This room exists but has low activity.${userText} Click Enter to join.`
+                : 'No active room exists here yet. Click Create to start a new chat room in this location.';
+    }
+}
+
+function hideGeohashPopup() {
+    const popup = document.getElementById('geohash-popup');
+    popup.style.display = 'none';
+}
+
+// Initialize popup event listeners
+function initializeGeohashPopup() {
+    const popup = document.getElementById('geohash-popup');
+    const closeBtn = document.getElementById('close-popup');
+    const cancelBtn = document.getElementById('popup-cancel-btn');
+    const enterBtn = document.getElementById('popup-enter-btn');
+    
+    // Close popup handlers
+    closeBtn.addEventListener('click', hideGeohashPopup);
+    cancelBtn.addEventListener('click', hideGeohashPopup);
+    
+    // Close on overlay click
+    popup.addEventListener('click', (e) => {
+        if (e.target === popup) {
+            hideGeohashPopup();
+        }
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && popup.style.display === 'flex') {
+            hideGeohashPopup();
+        }
+    });
+    
+    // Enter room button handler
+    enterBtn.addEventListener('click', async () => {
+        const geohash = enterBtn.dataset.geohash;
+        if (geohash) {
+            hideGeohashPopup();
+            await selectChatRoom(geohash);
+        }
+    });
+}
+
+async function selectChatRoom(geohash) {
+    try {
+        // Clean up previous room connections
+        if (messageUnsubscribe) {
+            messageUnsubscribe(); // Stop listening to old room's messages
+        }
+        if (presenceUnsubscribe) {
+            presenceUnsubscribe(); // Stop listening to old room's presence
+        }
+        if (presenceInterval) {
+            clearInterval(presenceInterval); // Stop the old presence updates
+        }
+
+        // Check room existence and create if needed
+        const roomData = await checkAndCreateRoom(geohash);
+        
+        if (!roomData) {
+            showNotification(`Failed to join or create room ${geohash}`, 'error');
+            return;
+        }
+
+        activeChatRoom = geohash;
+        console.log(`Selected chat room: ${activeChatRoom}`);
+        
+        // Add to recently joined rooms
+        addToRecentlyJoinedRooms(geohash);
+
+        // Show appropriate feedback
+        if (roomData.wasCreated) {
+            showNotification(`Created new room: ${geohash}`, 'success', 3000);
+        } else {
+            showNotification(`Joined room: ${geohash}`, 'success', 2000);
+        }
+        
+    } catch (error) {
+        console.error('Error selecting chat room:', error);
+        showNotification(`Failed to join room ${geohash}: ${error.message}`, 'error');
+        return;
+    }
 
     // Update header immediately to reflect target room
     updateChatTitle(geohash);

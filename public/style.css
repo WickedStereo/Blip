@@ -264,6 +264,9 @@ main {
 .overlay-top-left { top: 12px; left: 12px; }
 .overlay-top-right { top: 12px; right: 12px; }
 .overlay-bottom-left { bottom: 12px; left: 12px; }
+.overlay-bottom-right { bottom: 12px; right: 12px; }
+.overlay-middle-left { top: 50%; left: 12px; transform: translateY(-50%); }
+.overlay-middle-right { top: 50%; right: 12px; transform: translateY(-50%); }
 
 .overlay-row { display: flex; gap: 0.5rem; align-items: center; }
 
@@ -277,6 +280,252 @@ main {
 
 .overlay-panel .info-label { color: var(--text-inverse); }
 [data-theme="light"] .overlay-panel .info-label { color: var(--text-secondary); }
+
+/* Filter Controls */
+.filter-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: var(--space-2);
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-checkbox {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.filter-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-inverse);
+    cursor: pointer;
+    margin: 0;
+    user-select: none;
+}
+
+[data-theme="light"] .filter-label {
+    color: var(--text-primary);
+}
+
+.time-window-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.time-window-selector label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-inverse);
+    margin: 0;
+}
+
+[data-theme="light"] .time-window-selector label {
+    color: var(--text-secondary);
+}
+
+.form-select {
+    min-height: 32px;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-inverse);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+[data-theme="light"] .form-select {
+    border-color: var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.form-select:focus {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 1px;
+}
+
+/* Map Legend */
+.map-legend {
+    min-width: 180px;
+}
+
+.legend-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-inverse);
+    margin: 0 0 0.75rem 0;
+}
+
+[data-theme="light"] .legend-title {
+    color: var(--text-primary);
+}
+
+.legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: var(--space-3);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="light"] .legend-color {
+    border-color: var(--border-color);
+}
+
+.legend-active {
+    background: rgba(16, 185, 129, 0.8);
+    border-color: rgb(16, 185, 129);
+}
+
+.legend-trending {
+    background: rgba(251, 146, 60, 0.8);
+    border-color: rgb(251, 146, 60);
+}
+
+.legend-new {
+    background: rgba(168, 85, 247, 0.8);
+    border-color: rgb(168, 85, 247);
+}
+
+.legend-inactive {
+    background: rgba(99, 102, 241, 0.3);
+    border-color: rgb(99, 102, 241);
+}
+
+.legend-text {
+    font-size: 11px;
+    color: var(--text-inverse);
+    font-weight: 500;
+}
+
+[data-theme="light"] .legend-text {
+    color: var(--text-secondary);
+}
+
+/* Heat Scale */
+.heat-scale {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: var(--space-2);
+}
+
+[data-theme="light"] .heat-scale {
+    border-color: var(--border-color);
+}
+
+.heat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-inverse);
+    margin-bottom: 0.5rem;
+}
+
+[data-theme="light"] .heat-label {
+    color: var(--text-secondary);
+}
+
+.heat-gradient {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.heat-min, .heat-max {
+    font-size: 10px;
+    color: var(--text-inverse);
+    opacity: 0.7;
+}
+
+[data-theme="light"] .heat-min,
+[data-theme="light"] .heat-max {
+    color: var(--text-secondary);
+}
+
+.heat-bar {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, 
+        rgba(99, 102, 241, 0.3), 
+        rgba(16, 185, 129, 0.6), 
+        rgba(251, 146, 60, 0.8), 
+        rgba(239, 68, 68, 0.9)
+    );
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="light"] .heat-bar {
+    border-color: var(--border-color);
+}
+
+/* Enhanced geohash label styling for activity types */
+.gh-label.trending {
+    background: rgba(251, 146, 60, 0.9) !important;
+    border-color: rgb(251, 146, 60) !important;
+    color: white !important;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(251, 146, 60, 0.3);
+}
+
+.gh-label.new {
+    background: rgba(168, 85, 247, 0.9) !important;
+    border-color: rgb(168, 85, 247) !important;
+    color: white !important;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+}
+
+.gh-label.active {
+    background: rgba(16, 185, 129, 0.9) !important;
+    border-color: rgb(16, 185, 129) !important;
+    color: white !important;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.gh-label.inactive {
+    background: rgba(99, 102, 241, 0.7) !important;
+    border-color: rgb(99, 102, 241) !important;
+    color: white !important;
+}
+
+/* Responsive adjustments for filter panels */
+@media (max-width: 768px) {
+    .overlay-middle-left,
+    .overlay-middle-right {
+        display: none; /* Hide filters and legend on mobile to reduce clutter */
+    }
+    
+    .overlay-panel {
+        backdrop-filter: blur(8px);
+        background: rgba(17, 24, 39, 0.8);
+    }
+    
+    [data-theme="light"] .overlay-panel {
+        background: rgba(255, 255, 255, 0.9);
+    }
+}
 
 /* Position specific cards in the grid */
 #user-info {
@@ -1544,9 +1793,25 @@ main {
 /* Map-first fullscreen mode */
 .app-state-main .sidebar { grid-area: content; }
 .app-state-main main { grid-template-columns: 1fr; grid-template-areas: "content"; }
-.app-state-main #map-card { padding: 0; border: none; box-shadow: none; background: transparent; }
+.app-state-main #map-card { 
+    padding: 0; 
+    border: none; 
+    box-shadow: none; 
+    background: transparent; 
+    grid-area: unset;
+    width: 100%;
+    height: 100%;
+}
 .app-state-main #map { height: calc(100vh - 120px); border: 1px solid var(--border-color); }
 .app-state-main #map-card h3 { display: none; }
+
+/* Hide all other sidebar elements in fullscreen map mode */
+.app-state-main #user-info,
+.app-state-main #join-room-by-id,
+.app-state-main #recent-rooms,
+.app-state-main #nearby-rooms {
+    display: none;
+}
 
 
 
@@ -1868,6 +2133,78 @@ select:focus-visible,
 /* Onboarding modal styles */
 .onboarding-section {
     margin-bottom: var(--space-4);
+}
+
+/* Geohash popup styles */
+.geohash-popup-content {
+    text-align: center;
+}
+
+.popup-geohash-display {
+    margin-bottom: var(--space-3);
+    padding: var(--space-3);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.popup-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+    display: block;
+    margin-bottom: var(--space-1);
+}
+
+.popup-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+}
+
+.popup-status {
+    margin-bottom: var(--space-3);
+}
+
+.popup-status-text {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.popup-status-text.active {
+    background: rgba(16, 185, 129, 0.1);
+    color: rgb(16, 185, 129);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.popup-status-text.inactive {
+    background: rgba(99, 102, 241, 0.1);
+    color: rgb(99, 102, 241);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.popup-description {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-4);
+    line-height: 1.5;
+}
+
+.popup-actions {
+    display: flex;
+    gap: var(--space-2);
+    justify-content: center;
+}
+
+.popup-actions .btn {
+    min-width: 120px;
 }
 
 .onboarding-section h3 {
