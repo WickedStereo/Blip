@@ -1,0 +1,179 @@
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* CSS Variables - Import from ChatRoom module for consistency */
+:root {
+  /* Color Palette */
+  --background: oklch(0.9900 0.0050 180.0000);
+  --foreground: oklch(0.2000 0.0100 240.0000);
+  --card: oklch(0.9950 0.0030 180.0000);
+  --card-foreground: oklch(0.2000 0.0100 240.0000);
+  --popover: oklch(0.9950 0.0030 180.0000);
+  --popover-foreground: oklch(0.2000 0.0100 240.0000);
+  
+  /* Primary - Teal/Cyan for location theme */
+  --primary: oklch(0.5500 0.1800 195.0000);
+  --primary-foreground: oklch(0.9800 0.0200 195.0000);
+  
+  /* Secondary - Neutral grays */
+  --secondary: oklch(0.9400 0.0200 240.0000);
+  --secondary-foreground: oklch(0.3500 0.0200 240.0000);
+  
+  /* Muted colors */
+  --muted: oklch(0.9600 0.0150 200.0000);
+  --muted-foreground: oklch(0.5000 0.0200 220.0000);
+  
+  /* Accent - Warm orange for active states */
+  --accent: oklch(0.6800 0.1900 45.0000);
+  --accent-foreground: oklch(0.9800 0.0300 45.0000);
+  
+  /* Success - Green for safe/positive states */
+  --success: oklch(0.6200 0.1600 140.0000);
+  --success-foreground: oklch(0.9700 0.0400 140.0000);
+  
+  /* Warning - Amber for ephemeral/time indicators */
+  --warning: oklch(0.7500 0.1700 65.0000);
+  --warning-foreground: oklch(0.2000 0.0200 65.0000);
+  
+  /* Destructive - Red for errors */
+  --destructive: oklch(0.6000 0.2200 25.0000);
+  --destructive-foreground: oklch(0.9700 0.0300 25.0000);
+  
+  /* Borders and inputs */
+  --border: oklch(0.9000 0.0150 200.0000);
+  --input: oklch(0.9700 0.0100 200.0000);
+  --ring: oklch(0.5500 0.1800 195.0000);
+  
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  
+  /* Border radius */
+  --radius: 0.750rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px 0px hsl(200 20% 50% / 0.12), 0 1px 2px -1px hsl(200 20% 50% / 0.12);
+  --shadow: 0 1px 3px 0px hsl(200 20% 50% / 0.14), 0 1px 2px -1px hsl(200 20% 50% / 0.14);
+  --shadow-md: 0 4px 6px -1px hsl(200 20% 50% / 0.16), 0 2px 4px -1px hsl(200 20% 50% / 0.12);
+  --shadow-lg: 0 10px 15px -3px hsl(200 20% 50% / 0.18), 0 4px 6px -2px hsl(200 20% 50% / 0.10);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.1200 0.0200 220.0000);
+    --foreground: oklch(0.9200 0.0200 220.0000);
+    --card: oklch(0.1500 0.0200 220.0000);
+    --card-foreground: oklch(0.9200 0.0200 220.0000);
+    --primary: oklch(0.6500 0.1800 195.0000);
+    --primary-foreground: oklch(0.1500 0.0200 195.0000);
+    --secondary: oklch(0.2200 0.0200 220.0000);
+    --secondary-foreground: oklch(0.8000 0.0200 220.0000);
+    --muted: oklch(0.2000 0.0150 220.0000);
+    --muted-foreground: oklch(0.6500 0.0200 220.0000);
+    --border: oklch(0.2800 0.0150 220.0000);
+    --input: oklch(0.1800 0.0150 220.0000);
+  }
+}
+
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--foreground);
+  background-color: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+}
+
+/* Heading styles */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0;
+}
+
+/* Button reset */
+button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Input reset */
+input, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Focus styles */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* App transition animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

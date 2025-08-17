@@ -1,0 +1,651 @@
+/* Blipz Chat App Theme - Location-Based Modern Style */
+:root {
+  /* Color Palette */
+  --background: oklch(0.9900 0.0050 180.0000);
+  --foreground: oklch(0.2000 0.0100 240.0000);
+  --card: oklch(0.9950 0.0030 180.0000);
+  --card-foreground: oklch(0.2000 0.0100 240.0000);
+  --popover: oklch(0.9950 0.0030 180.0000);
+  --popover-foreground: oklch(0.2000 0.0100 240.0000);
+  
+  /* Primary - Teal/Cyan for location theme */
+  --primary: oklch(0.5500 0.1800 195.0000);
+  --primary-foreground: oklch(0.9800 0.0200 195.0000);
+  
+  /* Secondary - Neutral grays */
+  --secondary: oklch(0.9400 0.0200 240.0000);
+  --secondary-foreground: oklch(0.3500 0.0200 240.0000);
+  
+  /* Muted colors */
+  --muted: oklch(0.9600 0.0150 200.0000);
+  --muted-foreground: oklch(0.5000 0.0200 220.0000);
+  
+  /* Accent - Warm orange for active states */
+  --accent: oklch(0.6800 0.1900 45.0000);
+  --accent-foreground: oklch(0.9800 0.0300 45.0000);
+  
+  /* Success - Green for safe/positive states */
+  --success: oklch(0.6200 0.1600 140.0000);
+  --success-foreground: oklch(0.9700 0.0400 140.0000);
+  
+  /* Warning - Amber for ephemeral/time indicators */
+  --warning: oklch(0.7500 0.1700 65.0000);
+  --warning-foreground: oklch(0.2000 0.0200 65.0000);
+  
+  /* Destructive - Red for errors */
+  --destructive: oklch(0.6000 0.2200 25.0000);
+  --destructive-foreground: oklch(0.9700 0.0300 25.0000);
+  
+  /* Borders and inputs */
+  --border: oklch(0.9000 0.0150 200.0000);
+  --input: oklch(0.9700 0.0100 200.0000);
+  --ring: oklch(0.5500 0.1800 195.0000);
+  
+  /* Message colors */
+  --message-user: oklch(0.5500 0.1800 195.0000);
+  --message-user-fg: oklch(0.9800 0.0200 195.0000);
+  --message-other: oklch(0.9700 0.0100 200.0000);
+  --message-other-fg: oklch(0.2500 0.0200 220.0000);
+  --message-system: oklch(0.9400 0.0200 65.0000);
+  --message-system-fg: oklch(0.4000 0.0300 65.0000);
+  
+  /* Status indicators */
+  --status-online: oklch(0.6200 0.1600 140.0000);
+  --status-away: oklch(0.7500 0.1700 65.0000);
+  --status-offline: oklch(0.5500 0.0200 220.0000);
+  
+  /* Time indicators */
+  --time-fresh: oklch(0.6200 0.1600 140.0000);
+  --time-medium: oklch(0.7500 0.1700 65.0000);
+  --time-old: oklch(0.6000 0.2200 25.0000);
+  
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  
+  /* Border radius */
+  --radius: 0.750rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px 0px hsl(200 20% 50% / 0.12), 0 1px 2px -1px hsl(200 20% 50% / 0.12);
+  --shadow: 0 1px 3px 0px hsl(200 20% 50% / 0.14), 0 1px 2px -1px hsl(200 20% 50% / 0.14);
+  --shadow-md: 0 4px 6px -1px hsl(200 20% 50% / 0.16), 0 2px 4px -1px hsl(200 20% 50% / 0.12);
+  --shadow-lg: 0 10px 15px -3px hsl(200 20% 50% / 0.18), 0 4px 6px -2px hsl(200 20% 50% / 0.10);
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.5rem;
+  --spacing-2xl: 2rem;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.1200 0.0200 220.0000);
+    --foreground: oklch(0.9200 0.0200 220.0000);
+    --card: oklch(0.1500 0.0200 220.0000);
+    --card-foreground: oklch(0.9200 0.0200 220.0000);
+    --primary: oklch(0.6500 0.1800 195.0000);
+    --primary-foreground: oklch(0.1500 0.0200 195.0000);
+    --secondary: oklch(0.2200 0.0200 220.0000);
+    --secondary-foreground: oklch(0.8000 0.0200 220.0000);
+    --muted: oklch(0.2000 0.0150 220.0000);
+    --muted-foreground: oklch(0.6500 0.0200 220.0000);
+    --border: oklch(0.2800 0.0150 220.0000);
+    --input: oklch(0.1800 0.0150 220.0000);
+    --message-user: oklch(0.6500 0.1800 195.0000);
+    --message-user-fg: oklch(0.1500 0.0200 195.0000);
+    --message-other: oklch(0.2000 0.0150 220.0000);
+    --message-other-fg: oklch(0.8500 0.0200 220.0000);
+  }
+}
+
+/* Animations */
+@keyframes slideUpIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px) scale(0.95); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px) scale(0.95); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes disappearWarning {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 var(--warning); }
+  50% { transform: scale(1.02); box-shadow: 0 0 0 8px transparent; }
+  100% { transform: scale(0.95); opacity: 0; }
+}
+
+@keyframes typingPulse {
+  0%, 60%, 100% { opacity: 0.4; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-8px); }
+}
+
+@keyframes numberCounter {
+  from { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.1); }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes buttonPress {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+@keyframes emojiReaction {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.4) rotate(5deg); }
+  80% { transform: scale(1.1) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+/* Base styles */
+.chatContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.backButton {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.backButton:hover {
+  background-color: var(--secondary);
+}
+
+.backButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+  transform: scale(1.02);
+}
+
+.roomInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.roomCode {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.roomLocation {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.onlineCount {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--secondary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+}
+
+.userCountNumber {
+  font-weight: 500;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.statusOnline { background: var(--status-online); }
+.statusAway { background: var(--status-away); }
+.statusOffline { background: var(--status-offline); }
+
+/* Notice bars */
+.noticeBar {
+  padding: 0.5rem 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  border-bottom: 1px solid;
+}
+
+.ephemeralNotice {
+  background-color: color-mix(in srgb, var(--warning) 10%, transparent);
+  border-color: color-mix(in srgb, var(--warning) 20%, transparent);
+  color: var(--warning-foreground);
+}
+
+.newRoomBanner {
+  background-color: color-mix(in srgb, var(--success) 10%, transparent);
+  border-color: color-mix(in srgb, var(--success) 20%, transparent);
+  color: var(--success-foreground);
+  padding: 0.75rem 1rem;
+}
+
+.noticeContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Messages area */
+.messagesArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.messagesArea::-webkit-scrollbar { width: 6px; }
+.messagesArea::-webkit-scrollbar-track { background: var(--muted); border-radius: 3px; }
+.messagesArea::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.messagesArea::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+
+/* Message components */
+.message {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.messageUser {
+  flex-direction: row-reverse;
+}
+
+.messageSystem {
+  justify-content: center;
+}
+
+.messageBubble {
+  position: relative;
+  max-width: 85%;
+  word-wrap: break-word;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  transition: all 0.2s ease-out;
+}
+
+.messageBubble:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.messageBubbleUser {
+  background: var(--message-user);
+  color: var(--message-user-fg);
+  margin-left: auto;
+}
+
+.messageBubbleOther {
+  background: var(--message-other);
+  color: var(--message-other-fg);
+}
+
+.messageBubbleSystem {
+  background: var(--message-system);
+  color: var(--message-system-fg);
+  margin: 0 auto;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.messageText {
+  margin-bottom: 0.5rem;
+}
+
+.messageFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.messageTime {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.timeProgress {
+  height: 3px;
+  width: 3rem;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--time-fresh) 0%, var(--time-medium) 50%, var(--time-old) 100%);
+  transition: width 1s ease-linear;
+}
+
+.messageUsername {
+  font-weight: 500;
+}
+
+.messageDisappearing {
+  border: 2px solid color-mix(in srgb, var(--destructive) 30%, transparent);
+}
+
+.messageDisappearing .messageUsername {
+  color: var(--destructive);
+}
+
+/* Typing indicator */
+.typingIndicator {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.typingDots {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.typingDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background-color: var(--muted-foreground);
+  border-radius: 50%;
+  animation: typingPulse 1.4s infinite;
+}
+
+.typingDot:nth-child(2) { animation-delay: 0.2s; }
+.typingDot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Message composer */
+.composer {
+  border-top: 1px solid var(--border);
+  background-color: var(--card);
+  padding: 1rem;
+}
+
+.composerContent {
+  display: flex;
+  align-items: end;
+  gap: var(--spacing-md);
+}
+
+.emojiButton {
+  padding: 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.emojiButton:hover {
+  background-color: var(--secondary);
+}
+
+.inputContainer {
+  flex: 1;
+  position: relative;
+}
+
+.messageInput {
+  width: 100%;
+  padding: 0.75rem;
+  padding-right: 4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  resize: none;
+  background-color: var(--input);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: all 0.2s ease-out;
+  min-height: 3rem;
+  max-height: 7.5rem;
+}
+
+.messageInput:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+  transform: scale(1.02);
+}
+
+.messageInput::placeholder {
+  color: var(--muted-foreground);
+}
+
+.charCounter {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.charCounterWarning { color: var(--warning); }
+.charCounterError { color: var(--destructive); }
+
+.sendButton {
+  padding: 0.75rem;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.sendButton:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--primary) 90%, black);
+}
+
+.sendButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.sendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Error message */
+.errorMessage {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: color-mix(in srgb, var(--destructive) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--destructive) 20%, transparent);
+  border-radius: var(--radius-lg);
+  color: var(--destructive);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Emoji picker */
+.emojiPickerOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.emojiPickerContent {
+  background-color: var(--card);
+  padding: 1.5rem;
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 24rem;
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.emojiPickerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.emojiPickerTitle {
+  font-weight: 600;
+}
+
+.emojiPickerClose {
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.emojiPickerClose:hover {
+  background-color: var(--secondary);
+}
+
+.emojiGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.5rem;
+}
+
+.emojiGridButton {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.emojiGridButton:hover {
+  background-color: var(--secondary);
+  transform: scale(1.1);
+}
+
+/* Animation classes */
+.messageEnter { animation: slideUpIn 0.4s ease-out; }
+.messageUserEnter { animation: slideInRight 0.35s ease-out; }
+.messageOtherEnter { animation: slideInLeft 0.4s ease-out; }
+.messageDisappear { animation: disappearWarning 0.8s ease-in forwards; }
+.counterUpdate { animation: numberCounter 0.4s ease-out; }
+.buttonPress { animation: buttonPress 0.15s ease-out; }
+.errorShake { animation: shake 0.4s ease-in-out; }
+.emojiReact { animation: emojiReaction 0.3s ease-out; }
+.pulseGlow { animation: pulseGlow 2s infinite; }
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(90deg, var(--muted) 25%, var(--accent) 50%, var(--muted) 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2s infinite;
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  width: 16rem;
+  height: 4rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .messageBubble { 
+    max-width: 90%; 
+    padding: var(--spacing-sm) var(--spacing-md); 
+  }
+  .roomLocation { font-size: 0.8rem; }
+  .userCountNumber { font-size: 0.8rem; }
+  
+  .emojiPickerOverlay {
+    align-items: end;
+  }
+  
+  .emojiPickerContent {
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { 
+    animation-duration: 0.15s !important; 
+    animation-iteration-count: 1 !important; 
+  }
+  .pulseGlow { animation: none; }
+  .typingDot { animation: none; opacity: 0.7; }
+}

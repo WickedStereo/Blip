@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blipz Chat - abc123</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="stylesheet" href="blipz_theme_1.css">
+    <style>
+        /* Custom animations and chat-specific styles */
+        
+        /* Message animations */
+        @keyframes slideUpIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px) scale(0.95); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-20px) scale(0.95); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        
+        @keyframes disappearWarning {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 var(--warning); }
+            50% { transform: scale(1.02); box-shadow: 0 0 0 8px transparent; }
+            100% { transform: scale(0.95); opacity: 0; }
+        }
+        
+        @keyframes typingPulse {
+            0%, 60%, 100% { opacity: 0.4; transform: translateY(0); }
+            30% { opacity: 1; transform: translateY(-8px); }
+        }
+        
+        @keyframes numberCounter {
+            from { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes buttonPress {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+        
+        @keyframes emojiReaction {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.4) rotate(5deg); }
+            80% { transform: scale(1.1) rotate(-2deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        /* Animation classes */
+        .message-enter { animation: slideUpIn 0.4s ease-out; }
+        .message-user { animation: slideInRight 0.35s ease-out; }
+        .message-other { animation: slideInLeft 0.4s ease-out; }
+        .message-disappear { animation: disappearWarning 0.8s ease-in forwards; }
+        .typing-dot { animation: typingPulse 1.4s infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        .counter-update { animation: numberCounter 0.4s ease-out; }
+        .button-press { animation: buttonPress 0.15s ease-out; }
+        .error-shake { animation: shake 0.4s ease-in-out; }
+        .emoji-react { animation: emojiReaction 0.3s ease-out; }
+        .pulse-glow { animation: pulseGlow 2s infinite; }
+        
+        /* Skeleton loader */
+        .skeleton {
+            background: linear-gradient(90deg, var(--muted) 25%, var(--accent) 50%, var(--muted) 75%);
+            background-size: 200px 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        /* Custom scrollbar */
+        .chat-scroll::-webkit-scrollbar { width: 6px; }
+        .chat-scroll::-webkit-scrollbar-track { background: var(--muted); border-radius: 3px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .chat-scroll::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+        
+        /* Time progress bar */
+        .time-progress {
+            height: 3px;
+            background: linear-gradient(90deg, var(--time-fresh) 0%, var(--time-medium) 50%, var(--time-old) 100%);
+            transition: width 1s ease-linear;
+        }
+        
+        /* Focus ring enhancement */
+        .focus-ring:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px var(--ring);
+            transform: scale(1.02);
+            transition: all 0.2s ease-out;
+        }
+        
+        /* Message bubble styles */
+        .message-bubble {
+            position: relative;
+            max-width: 85%;
+            word-wrap: break-word;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            transition: all 0.2s ease-out;
+        }
+        
+        .message-bubble:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .message-user .message-bubble {
+            background: var(--message-user);
+            color: var(--message-user-fg);
+            margin-left: auto;
+        }
+        
+        .message-other .message-bubble {
+            background: var(--message-other);
+            color: var(--message-other-fg);
+        }
+        
+        .message-system .message-bubble {
+            background: var(--message-system);
+            color: var(--message-system-fg);
+            margin: 0 auto;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        /* Status indicators */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: var(--spacing-xs);
+        }
+        
+        .status-online { background: var(--status-online); }
+        .status-away { background: var(--status-away); }
+        .status-offline { background: var(--status-offline); }
+        
+        /* Responsive breakpoints */
+        @media (max-width: 768px) {
+            .message-bubble { max-width: 90%; padding: var(--spacing-sm) var(--spacing-md); }
+            .header-text { font-size: 0.9rem; }
+            .user-count { font-size: 0.8rem; }
+        }
+        
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            * { animation-duration: 0.15s !important; animation-iteration-count: 1 !important; }
+            .pulse-glow { animation: none; }
+            .typing-dot { animation: none; opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <!-- Main Chat Container -->
+    <div class="flex flex-col h-screen bg-background text-foreground">
+        
+        <!-- Header -->
+        <header class="flex items-center justify-between p-4 border-b border-border bg-card shadow-sm">
+            <div class="flex items-center space-x-3">
+                <!-- Back to Map Button -->
+                <button class="p-2 hover:bg-secondary rounded-lg transition-all duration-200 focus-ring" onclick="goBackToMap()">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </button>
+                
+                <!-- Room Info -->
+                <div class="flex flex-col">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-mono font-semibold text-primary">abc123</span>
+                        <i data-lucide="map-pin" class="w-4 h-4 text-muted-foreground"></i>
+                    </div>
+                    <span class="text-sm text-muted-foreground header-text">~Downtown Area</span>
+                </div>
+            </div>
+            
+            <!-- Online Count & Status -->
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2 bg-secondary px-3 py-1 rounded-full">
+                    <i data-lucide="users" class="w-4 h-4 text-muted-foreground"></i>
+                    <span class="text-sm font-medium user-count counter-update">12</span>
+                    <span class="text-sm text-muted-foreground">online</span>
+                </div>
+                <div class="status-dot status-online pulse-glow"></div>
+            </div>
+        </header>
+        
+        <!-- Ephemeral Notice Bar -->
+        <div class="bg-warning/10 border-b border-warning/20 px-4 py-2">
+            <div class="flex items-center justify-center space-x-2 text-sm">
+                <i data-lucide="zap" class="w-4 h-4 text-warning"></i>
+                <span class="text-warning-foreground">Messages disappear in 24h</span>
+                <span class="text-warning/70">•</span>
+                <span class="text-warning-foreground flex items-center space-x-1">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>Kid-safe mode</span>
+                </span>
+            </div>
+        </div>
+        
+        <!-- New Room Banner -->
+        <div class="bg-success/10 border-b border-success/20 px-4 py-3 message-enter">
+            <div class="flex items-center justify-center space-x-2 text-center">
+                <span class="text-2xl">🎉</span>
+                <span class="text-success-foreground font-medium">Welcome to abc123! You're the first here.</span>
+            </div>
+        </div>
+        
+        <!-- Chat Messages Area -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 chat-scroll" id="chatContainer">
+            
+            <!-- System Message -->
+            <div class="message-system message-enter">
+                <div class="message-bubble">
+                    <div class="flex items-center justify-center space-x-2 text-xs opacity-75">
+                        <span>Room created</span>
+                        <span>•</span>
+                        <span>2 hours ago</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Other User Message -->
+            <div class="message-other message-enter">
+                <div class="flex items-start space-x-3">
+                    <div class="message-bubble">
+                        <p class="mb-2">Hey! Anyone around here? Just moved to the area and looking for good coffee spots ☕</p>
+                        <div class="flex items-center justify-between text-xs opacity-75">
+                            <span class="font-medium">@alex</span>
+                            <div class="flex items-center space-x-2">
+                                <span>2h ago</span>
+                                <div class="time-progress w-12 rounded-full" style="width: 75%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Message -->
+            <div class="message-user message-enter">
+                <div class="flex items-start space-x-3 flex-row-reverse">
+                    <div class="message-bubble">
+                        <p class="mb-2">Yeah! Just got here too. There's an amazing place called Blue Bottle about 2 blocks north 👍</p>
+                        <div class="flex items-center justify-between text-xs opacity-75">
+                            <div class="flex items-center space-x-2">
+                                <div class="time-progress w-12 rounded-full" style="width: 85%;"></div>
+                                <span>1h ago</span>
+                            </div>
+                            <span class="font-medium">You</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Another User Message -->
+            <div class="message-other message-enter">
+                <div class="flex items-start space-x-3">
+                    <div class="message-bubble">
+                        <p class="mb-2">Perfect! Thanks for the tip 🙌</p>
+                        <div class="flex items-center justify-between text-xs opacity-75">
+                            <span class="font-medium">@sam</span>
+                            <div class="flex items-center space-x-2">
+                                <span>30m ago</span>
+                                <div class="time-progress w-12 rounded-full bg-warning" style="width: 95%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Disappearing Message Example -->
+            <div class="message-other message-disappear">
+                <div class="flex items-start space-x-3">
+                    <div class="message-bubble border-2 border-destructive/30">
+                        <p class="mb-2">This message is about to disappear... ⏰</p>
+                        <div class="flex items-center justify-between text-xs opacity-75">
+                            <span class="font-medium text-destructive">@timekeeper</span>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-destructive">5m left</span>
+                                <div class="time-progress w-12 rounded-full bg-destructive" style="width: 98%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading Skeleton -->
+            <div class="message-other">
+                <div class="flex items-start space-x-3">
+                    <div class="skeleton rounded-lg p-4 w-64 h-16"></div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Typing Indicator -->
+        <div class="px-4 py-2 border-t border-border/50" id="typingIndicator">
+            <div class="flex items-center space-x-2 text-sm text-muted-foreground">
+                <span class="text-lg">💭</span>
+                <span>@alex is typing</span>
+                <div class="flex space-x-1">
+                    <div class="w-2 h-2 bg-muted-foreground rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-muted-foreground rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-muted-foreground rounded-full typing-dot"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Composer -->
+        <div class="border-t border-border bg-card p-4">
+            <div class="flex items-end space-x-3">
+                
+                <!-- Emoji Button -->
+                <button class="p-3 hover:bg-secondary rounded-lg transition-all duration-200 focus-ring" onclick="toggleEmojiPicker()">
+                    <span class="text-xl">😊</span>
+                </button>
+                
+                <!-- Message Input -->
+                <div class="flex-1 relative">
+                    <textarea 
+                        id="messageInput"
+                        class="w-full p-3 pr-16 border border-border rounded-lg resize-none focus-ring bg-input text-foreground placeholder-muted-foreground"
+                        placeholder="Type your message..."
+                        rows="1"
+                        maxlength="300"
+                        onkeydown="handleKeyDown(event)"
+                        oninput="updateCharCounter()"
+                    ></textarea>
+                    
+                    <!-- Character Counter -->
+                    <div class="absolute bottom-2 right-2 text-xs text-muted-foreground">
+                        <span id="charCounter">300</span>
+                    </div>
+                </div>
+                
+                <!-- Send Button -->
+                <button 
+                    id="sendButton"
+                    class="p-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-200 focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                    onclick="sendMessage()"
+                    disabled
+                >
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                </button>
+                
+            </div>
+            
+            <!-- Error State -->
+            <div id="errorMessage" class="hidden mt-2 p-2 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm error-shake">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="wifi-off" class="w-4 h-4"></i>
+                    <span>Connection lost. Trying to reconnect...</span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Emoji Picker Modal (Hidden by default) -->
+    <div id="emojiPicker" class="hidden fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+        <div class="bg-card p-6 rounded-t-2xl sm:rounded-2xl w-full sm:w-96 max-h-96 overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold">Choose an emoji</h3>
+                <button onclick="toggleEmojiPicker()" class="p-1 hover:bg-secondary rounded">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-8 gap-2" id="emojiGrid">
+                <!-- Emoji grid will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Chat functionality
+        let messageCount = 0;
+        const maxChars = 300;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCharCounter();
+            setupAutoResize();
+            simulateTyping();
+            populateEmojiPicker();
+        });
+        
+        // Message handling
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message && message.length <= maxChars) {
+                addMessage(message, 'user');
+                input.value = '';
+                updateCharCounter();
+                input.style.height = 'auto';
+                
+                // Simulate response after delay
+                setTimeout(() => {
+                    simulateResponse();
+                }, 1000 + Math.random() * 2000);
+            }
+        }
+        
+        function addMessage(text, type = 'other', username = 'You') {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-${type} message-enter`;
+            
+            const timeAgo = 'just now';
+            const progressWidth = type === 'user' ? '100%' : `${90 + Math.random() * 10}%`;
+            
+            messageDiv.innerHTML = `
+                <div class="flex items-start space-x-3 ${type === 'user' ? 'flex-row-reverse' : ''}">
+                    <div class="message-bubble">
+                        <p class="mb-2">${escapeHtml(text)}</p>
+                        <div class="flex items-center justify-between text-xs opacity-75">
+                            ${type === 'user' ? 
+                                `<div class="flex items-center space-x-2">
+                                    <div class="time-progress w-12 rounded-full" style="width: ${progressWidth};"></div>
+                                    <span>${timeAgo}</span>
+                                </div>
+                                <span class="font-medium">${username}</span>` :
+                                `<span class="font-medium">@${username}</span>
+                                <div class="flex items-center space-x-2">
+                                    <span>${timeAgo}</span>
+                                    <div class="time-progress w-12 rounded-full" style="width: ${progressWidth};"></div>
+                                </div>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove skeleton if present
+            const skeleton = container.querySelector('.skeleton');
+            if (skeleton) {
+                skeleton.closest('.message-other').remove();
+            }
+            
+            container.appendChild(messageDiv);
+            scrollToBottom();
+            messageCount++;
+        }
+        
+        function simulateResponse() {
+            const responses = [
+                "That sounds great! 👍",
+                "Thanks for sharing!",
+                "Interesting perspective 🤔",
+                "I'll check that out",
+                "Nice to meet you!",
+                "Hope you're enjoying the area 😊"
+            ];
+            
+            const usernames = ['alex', 'sam', 'jordan', 'casey', 'morgan'];
+            const response = responses[Math.floor(Math.random() * responses.length)];
+            const username = usernames[Math.floor(Math.random() * usernames.length)];
+            
+            addMessage(response, 'other', username);
+            updateOnlineCount();
+        }
+        
+        // Input handling
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        function updateCharCounter() {
+            const input = document.getElementById('messageInput');
+            const counter = document.getElementById('charCounter');
+            const sendButton = document.getElementById('sendButton');
+            
+            const remaining = maxChars - input.value.length;
+            counter.textContent = remaining;
+            
+            // Color coding for character limit
+            if (remaining < 50) {
+                counter.className = 'text-destructive';
+            } else if (remaining < 100) {
+                counter.className = 'text-warning';
+            } else {
+                counter.className = 'text-muted-foreground';
+            }
+            
+            // Enable/disable send button
+            sendButton.disabled = input.value.trim().length === 0 || remaining < 0;
+        }
+        
+        function setupAutoResize() {
+            const input = document.getElementById('messageInput');
+            input.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+        }
+        
+        // UI interactions
+        function goBackToMap() {
+            // Animate out
+            document.body.style.transform = 'translateY(100%)';
+            document.body.style.transition = 'transform 0.4s ease-out';
+            
+            setTimeout(() => {
+                // In real app, this would navigate back to map
+                alert('Navigating back to map...');
+                document.body.style.transform = '';
+                document.body.style.transition = '';
+            }, 400);
+        }
+        
+        function toggleEmojiPicker() {
+            const picker = document.getElementById('emojiPicker');
+            picker.classList.toggle('hidden');
+        }
+        
+        function populateEmojiPicker() {
+            const emojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕'];
+            const grid = document.getElementById('emojiGrid');
+            
+            emojis.forEach(emoji => {
+                const button = document.createElement('button');
+                button.textContent = emoji;
+                button.className = 'p-2 hover:bg-secondary rounded text-2xl transition-all duration-200 hover:scale-110';
+                button.onclick = () => insertEmoji(emoji);
+                grid.appendChild(button);
+            });
+        }
+        
+        function insertEmoji(emoji) {
+            const input = document.getElementById('messageInput');
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const text = input.value;
+            
+            input.value = text.substring(0, start) + emoji + text.substring(end);
+            input.setSelectionRange(start + emoji.length, start + emoji.length);
+            input.focus();
+            updateCharCounter();
+            
+            // Animate emoji button
+            event.target.classList.add('emoji-react');
+            setTimeout(() => event.target.classList.remove('emoji-react'), 300);
+            
+            toggleEmojiPicker();
+        }
+        
+        // Utility functions
+        function scrollToBottom() {
+            const container = document.getElementById('chatContainer');
+            container.scrollTo({
+                top: container.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+        
+        function updateOnlineCount() {
+            const counter = document.querySelector('.counter-update');
+            const currentCount = parseInt(counter.textContent);
+            const newCount = currentCount + Math.floor(Math.random() * 3) - 1;
+            
+            if (newCount > 0) {
+                counter.textContent = Math.max(1, newCount);
+                counter.classList.add('counter-update');
+                setTimeout(() => counter.classList.remove('counter-update'), 400);
+            }
+        }
+        
+        function simulateTyping() {
+            const indicator = document.getElementById('typingIndicator');
+            
+            // Show typing randomly
+            setInterval(() => {
+                if (Math.random() > 0.7) {
+                    indicator.style.display = 'block';
+                    setTimeout(() => {
+                        indicator.style.display = 'none';
+                    }, 2000 + Math.random() * 3000);
+                }
+            }, 10000);
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Simulate connection issues occasionally
+        setInterval(() => {
+            if (Math.random() > 0.95) {
+                const errorEl = document.getElementById('errorMessage');
+                errorEl.classList.remove('hidden');
+                setTimeout(() => {
+                    errorEl.classList.add('hidden');
+                }, 3000);
+            }
+        }, 30000);
+        
+        // Battery optimization - pause animations when tab not visible
+        document.addEventListener('visibilitychange', function() {
+            const animationElements = document.querySelectorAll('.pulse-glow, .typing-dot');
+            animationElements.forEach(el => {
+                if (document.hidden) {
+                    el.style.animationPlayState = 'paused';
+                } else {
+                    el.style.animationPlayState = 'running';
+                }
+            });
+        });
+        
+    </script>
+</body>
+</html>

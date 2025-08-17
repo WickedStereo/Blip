@@ -1,0 +1,168 @@
+/* Blipz Chat App Theme - Location-Based Modern Style */
+:root {
+  /* Color Palette */
+  --background: oklch(0.9900 0.0050 180.0000); /* Soft white with hint of cool */
+  --foreground: oklch(0.2000 0.0100 240.0000); /* Deep blue-gray */
+  --card: oklch(0.9950 0.0030 180.0000); /* Pure white cards */
+  --card-foreground: oklch(0.2000 0.0100 240.0000);
+  --popover: oklch(0.9950 0.0030 180.0000);
+  --popover-foreground: oklch(0.2000 0.0100 240.0000);
+  
+  /* Primary - Teal/Cyan for location theme */
+  --primary: oklch(0.5500 0.1800 195.0000); /* Rich teal */
+  --primary-foreground: oklch(0.9800 0.0200 195.0000); /* Light teal-white */
+  
+  /* Secondary - Neutral grays */
+  --secondary: oklch(0.9400 0.0200 240.0000); /* Cool light gray */
+  --secondary-foreground: oklch(0.3500 0.0200 240.0000); /* Medium gray */
+  
+  /* Muted colors */
+  --muted: oklch(0.9600 0.0150 200.0000); /* Very light blue-gray */
+  --muted-foreground: oklch(0.5000 0.0200 220.0000); /* Medium blue-gray */
+  
+  /* Accent - Warm orange for active states */
+  --accent: oklch(0.6800 0.1900 45.0000); /* Warm orange */
+  --accent-foreground: oklch(0.9800 0.0300 45.0000); /* Light orange-white */
+  
+  /* Success - Green for safe/positive states */
+  --success: oklch(0.6200 0.1600 140.0000); /* Fresh green */
+  --success-foreground: oklch(0.9700 0.0400 140.0000);
+  
+  /* Warning - Amber for ephemeral/time indicators */
+  --warning: oklch(0.7500 0.1700 65.0000); /* Warm amber */
+  --warning-foreground: oklch(0.2000 0.0200 65.0000);
+  
+  /* Destructive - Red for errors */
+  --destructive: oklch(0.6000 0.2200 25.0000); /* Warm red */
+  --destructive-foreground: oklch(0.9700 0.0300 25.0000);
+  
+  /* Borders and inputs */
+  --border: oklch(0.9000 0.0150 200.0000); /* Soft blue-gray border */
+  --input: oklch(0.9700 0.0100 200.0000); /* Very light input background */
+  --ring: oklch(0.5500 0.1800 195.0000); /* Teal focus ring */
+  
+  /* Sidebar colors */
+  --sidebar: oklch(0.9800 0.0200 200.0000);
+  --sidebar-foreground: oklch(0.2500 0.0200 220.0000);
+  --sidebar-primary: oklch(0.5500 0.1800 195.0000);
+  --sidebar-primary-foreground: oklch(0.9800 0.0200 195.0000);
+  --sidebar-accent: oklch(0.9400 0.0200 200.0000);
+  --sidebar-accent-foreground: oklch(0.3500 0.0200 220.0000);
+  --sidebar-border: oklch(0.9000 0.0150 200.0000);
+  --sidebar-ring: oklch(0.5500 0.1800 195.0000);
+  
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: 'Inter', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  
+  /* Border radius - Friendly but not too playful */
+  --radius: 0.750rem; /* 12px - good for touch interfaces */
+  
+  /* Shadows - Subtle depth */
+  --shadow-2xs: 0 1px 2px 0px hsl(200 20% 50% / 0.08);
+  --shadow-xs: 0 1px 3px 0px hsl(200 20% 50% / 0.10);
+  --shadow-sm: 0 1px 3px 0px hsl(200 20% 50% / 0.12), 0 1px 2px -1px hsl(200 20% 50% / 0.12);
+  --shadow: 0 1px 3px 0px hsl(200 20% 50% / 0.14), 0 1px 2px -1px hsl(200 20% 50% / 0.14);
+  --shadow-md: 0 4px 6px -1px hsl(200 20% 50% / 0.16), 0 2px 4px -1px hsl(200 20% 50% / 0.12);
+  --shadow-lg: 0 10px 15px -3px hsl(200 20% 50% / 0.18), 0 4px 6px -2px hsl(200 20% 50% / 0.10);
+  --shadow-xl: 0 20px 25px -5px hsl(200 20% 50% / 0.20), 0 10px 10px -5px hsl(200 20% 50% / 0.08);
+  --shadow-2xl: 0 25px 50px -12px hsl(200 20% 50% / 0.25);
+  
+  /* Letter spacing */
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.025em;
+  
+  /* Spacing scale - Touch-friendly */
+  --spacing-xs: 0.25rem; /* 4px */
+  --spacing-sm: 0.5rem;  /* 8px */
+  --spacing-md: 0.75rem; /* 12px */
+  --spacing-lg: 1rem;    /* 16px */
+  --spacing-xl: 1.5rem;  /* 24px */
+  --spacing-2xl: 2rem;   /* 32px */
+  
+  /* Computed radius variations */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Chat-specific colors */
+  --message-user: oklch(0.5500 0.1800 195.0000); /* User messages in primary teal */
+  --message-user-fg: oklch(0.9800 0.0200 195.0000);
+  --message-other: oklch(0.9700 0.0100 200.0000); /* Other messages in light gray */
+  --message-other-fg: oklch(0.2500 0.0200 220.0000);
+  --message-system: oklch(0.9400 0.0200 65.0000); /* System messages in warm tone */
+  --message-system-fg: oklch(0.4000 0.0300 65.0000);
+  
+  /* Status indicators */
+  --status-online: oklch(0.6200 0.1600 140.0000); /* Green */
+  --status-away: oklch(0.7500 0.1700 65.0000); /* Amber */
+  --status-offline: oklch(0.5500 0.0200 220.0000); /* Gray */
+  
+  /* Ephemeral time indicators */
+  --time-fresh: oklch(0.6200 0.1600 140.0000); /* Green - just posted */
+  --time-medium: oklch(0.7500 0.1700 65.0000); /* Amber - getting old */
+  --time-old: oklch(0.6000 0.2200 25.0000); /* Red - about to expire */
+}
+
+/* Dark mode support for future */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.1200 0.0200 220.0000);
+    --foreground: oklch(0.9200 0.0200 220.0000);
+    --card: oklch(0.1500 0.0200 220.0000);
+    --card-foreground: oklch(0.9200 0.0200 220.0000);
+    --popover: oklch(0.1500 0.0200 220.0000);
+    --popover-foreground: oklch(0.9200 0.0200 220.0000);
+    
+    --primary: oklch(0.6500 0.1800 195.0000);
+    --primary-foreground: oklch(0.1500 0.0200 195.0000);
+    
+    --secondary: oklch(0.2200 0.0200 220.0000);
+    --secondary-foreground: oklch(0.8000 0.0200 220.0000);
+    
+    --muted: oklch(0.2000 0.0150 220.0000);
+    --muted-foreground: oklch(0.6500 0.0200 220.0000);
+    
+    --accent: oklch(0.7000 0.1900 45.0000);
+    --accent-foreground: oklch(0.1500 0.0200 45.0000);
+    
+    --border: oklch(0.2800 0.0150 220.0000);
+    --input: oklch(0.1800 0.0150 220.0000);
+    --ring: oklch(0.6500 0.1800 195.0000);
+    
+    --message-user: oklch(0.6500 0.1800 195.0000);
+    --message-user-fg: oklch(0.1500 0.0200 195.0000);
+    --message-other: oklch(0.2000 0.0150 220.0000);
+    --message-other-fg: oklch(0.8500 0.0200 220.0000);
+  }
+}
+
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* Base typography settings */
+body {
+  font-family: var(--font-sans) !important;
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  color: var(--foreground) !important;
+  background-color: var(--background) !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Heading overrides */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans) !important;
+  font-weight: 600 !important;
+  color: var(--foreground) !important;
+}
+
+/* Code elements */
+code, pre {
+  font-family: var(--font-mono) !important;
+}

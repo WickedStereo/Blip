@@ -1,0 +1,729 @@
+/* Landing Page Styles */
+
+.landingContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.header {
+  display: flex;
+  items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 10;
+}
+
+.logo {
+  display: flex;
+  items: center;
+  gap: 0.75rem;
+}
+
+.logoText {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.locationStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--secondary);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  color: var(--secondary-foreground);
+}
+
+.locationIcon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--primary);
+}
+
+.mainContent {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.mapSection {
+  flex: 1;
+  position: relative;
+  background: var(--muted);
+  border-right: 1px solid var(--border);
+}
+
+.mapContainer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: linear-gradient(135deg, 
+    var(--muted) 0%, 
+    color-mix(in srgb, var(--primary) 20%, var(--muted)) 50%,
+    var(--muted) 100%);
+  overflow: hidden;
+}
+
+.mapOverlay {
+  position: absolute;
+  inset: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+  opacity: 0.3;
+}
+
+.userLocationDot {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--primary);
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: var(--shadow);
+  animation: pulseLocation 2s infinite;
+  z-index: 5;
+}
+
+.roomMarker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  z-index: 4;
+}
+
+.roomMarker:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.roomMarkerIcon {
+  width: 32px;
+  height: 32px;
+  background: var(--card);
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.roomMarkerSelected .roomMarkerIcon {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  transform: scale(1.2);
+}
+
+.roomMarkerNew .roomMarkerIcon {
+  border-color: var(--accent);
+  color: var(--accent);
+  animation: newRoomPulse 2s infinite;
+}
+
+.sidePanel {
+  width: 400px;
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+}
+
+.sidePanelHeader {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidePanelTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--foreground);
+}
+
+.sidePanelSubtitle {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.geohashSection {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.geohashTitle {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inputGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.geohashInput {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--input);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  transition: all 0.2s ease-out;
+}
+
+.geohashInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.geohashInput::placeholder {
+  color: var(--muted-foreground);
+}
+
+.joinButton {
+  padding: 0.75rem 1.5rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  white-space: nowrap;
+}
+
+.joinButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 90%, black);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.joinButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.roomsList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.roomsListTitle {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.roomCount {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2rem;
+  color: var(--muted-foreground);
+}
+
+.emptyStateIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.loadingSpinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--muted);
+  border-top: 3px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Room Card Styles */
+.roomCard {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  position: relative;
+}
+
+.roomCard:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.roomCardSelected {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 5%, var(--background));
+  box-shadow: var(--shadow);
+}
+
+.roomCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.roomCode {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--primary);
+}
+
+.roomBadge {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.roomBadgeNew {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.roomBadgeKidSafe {
+  background: var(--success);
+  color: var(--success-foreground);
+}
+
+.roomLocation {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.roomStats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.roomUserCount {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.roomDistance {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Animations */
+@keyframes pulseLocation {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 0.7; 
+    transform: scale(1.2); 
+  }
+}
+
+@keyframes newRoomPulse {
+  0%, 100% { 
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+  }
+  50% { 
+    border-color: var(--accent);
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 1rem;
+  }
+  
+  .logo {
+    gap: 0.5rem;
+  }
+  
+  .logoText {
+    font-size: 1.25rem;
+  }
+  
+  .mainContent {
+    flex-direction: column;
+  }
+  
+  .mapSection {
+    height: 60vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .sidePanel {
+    width: 100%;
+    height: 40vh;
+    border-left: none;
+  }
+  
+  .sidePanelHeader {
+    padding: 1rem;
+  }
+  
+  .geohashSection {
+    padding: 1rem;
+  }
+  
+  .roomsList {
+    padding: 0.5rem 1rem;
+  }
+  
+  .roomCard {
+    padding: 0.75rem;
+  }
+}
+
+/* User Controls */
+.userControls {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.userAvatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.usernameDisplay {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.username {
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.editButton {
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.editButton:hover {
+  background: var(--secondary);
+  color: var(--foreground);
+}
+
+.usernameEdit {
+  flex: 1;
+}
+
+.usernameInput {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--input);
+  color: var(--foreground);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease-out;
+}
+
+.usernameInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.userMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.userType {
+  font-weight: 500;
+}
+
+.userSeparator {
+  opacity: 0.5;
+}
+
+.userId {
+  font-family: var(--font-mono);
+  cursor: help;
+}
+
+/* Enhanced geohash input */
+.enhancedGeohashSection {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.enhancedGeohashTitle {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  justify-content: between;
+}
+
+.geohashModeToggle {
+  display: flex;
+  background: var(--secondary);
+  border-radius: var(--radius);
+  padding: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.modeButton {
+  flex: 1;
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  color: var(--muted-foreground);
+}
+
+.modeButton.active {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--shadow-sm);
+}
+
+.quickJoinButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.quickJoinButton {
+  padding: 0.75rem;
+  background: var(--secondary);
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  color: var(--secondary-foreground);
+}
+
+.quickJoinButton:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  transform: translateY(-1px);
+}
+
+.geohashSuggestions {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--muted);
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  line-height: 1.4;
+}
+
+.suggestionsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.suggestionChip {
+  padding: 0.25rem 0.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.suggestionChip:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+/* Map loading overlay */
+.mapLoadingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.mapLoadingContent {
+  background: var(--card);
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Enhanced room card stats */
+.roomCardEnhanced {
+  position: relative;
+}
+
+.roomCardHeader {
+  position: relative;
+}
+
+.roomActivityIndicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulseGlow 2s infinite;
+}
+
+.roomActivityIndicator.medium {
+  background: var(--warning);
+}
+
+.roomActivityIndicator.low {
+  background: var(--muted-foreground);
+  animation: none;
+}
+
+.roomGeohashChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--muted);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-top: 0.5rem;
+}
+
+/* Desktop enhancements */
+@media (min-width: 1200px) {
+  .sidePanel {
+    width: 450px;
+  }
+  
+  .mapContainer {
+    background-size: 40px 40px;
+  }
+}
+
+/* Map interaction enhancements */
+:global(.leaflet-interactive) {
+  cursor: pointer !important;
+  transition: all 0.2s ease-out !important;
+}
+
+:global(.leaflet-interactive:hover) {
+  opacity: 0.8 !important;
+}
+
+/* Geohash popup styling */
+:global(.leaflet-popup-content-wrapper) {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: 1px solid var(--border) !important;
+}
+
+:global(.leaflet-popup-content) {
+  margin: 0.75rem !important;
+  font-family: var(--font-sans) !important;
+}
+
+:global(.leaflet-popup-tip) {
+  border-top-color: var(--border) !important;
+}

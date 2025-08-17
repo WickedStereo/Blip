@@ -1,180 +1,207 @@
-# 🌍 Blipz - Location-Based Anonymous Chat
+# 🗺️ Blipz - Location-Based Chat App
 
-**Blipz** is a privacy-focused, location-based group chat application that allows users to discover and join chat rooms based on their approximate geographical location without requiring sign-up or personal information.
+A privacy-focused, location-based chat application where users can discover and join conversations in their area using geohash-based room system.
 
-![Blipz Screenshot](https://via.placeholder.com/800x400/2563eb/ffffff?text=Blipz+Chat+Interface)
+## 🌐 **Live Demo**
+**Visit: https://blip-d93fe.web.app**
 
-## ✨ Features
+## ✨ **Key Features**
 
-### 🔐 Privacy-First Design
-- **Anonymous Browsing**: Browse rooms without signing in; account required to send (see roadmap)
-- **Geohash Location Privacy**: GPS coordinates never leave your device — only geohash approximations are used
-- **Minimal Data**: No raw GPS or unnecessary personal data
+### 🔑 **Geohash-Based Room System**
+- **One room per geohash** - Each geographic area has exactly one conversation
+- **Click to join/create** - Click any region on the map to join existing or start new rooms
+- **Visual discovery** - Interactive map with geohash grid overlays
+- **Smart room detection** - Automatically shows nearby active conversations
 
-### 💬 Modern Chat Experience
-- **Real-time Messaging**: Instant message delivery with Firebase Firestore
-- **Message Reactions**: React to messages with 👍, ❤️, 😂 and more
-- **Emoji Picker**: Full emoji support with categorized picker
-- **Typing Indicators**: See when others are typing
-- **User Count**: Live participant count in each room
+### 🗺️ **Interactive Leaflet Map**
+- **Professional map tiles** - Real OpenStreetMap integration with smooth interactions
+- **Geohash regions** - Visual boundaries with 6-character location codes
+- **Room markers** - Custom icons showing user counts and activity
+- **Location controls** - "My Location" button and overlay toggles
 
-### 🌍 Location-Based Discovery
-- **Radius Search (current)**: Find chat rooms within a specified kilometer radius
-- **Map‑First Discovery (in progress)**: Interactive map with geohash grid overlays, labels, and active-room highlighting
-- **Smart Room Logic**: "Enter" existing rooms or "Create" new ones (from map labels or list)
-- **Recently Joined**: Quick access to your recently visited rooms
+### 💬 **Real-time Chat**
+- **Anonymous authentication** - No signup required, instant access
+- **Ephemeral messages** - 24-hour auto-deletion for privacy
+- **Live synchronization** - Real-time updates via Firebase
+- **Typing indicators** - See when others are composing messages
 
-### 🎨 Modern UI/UX
-- **Dark/Light Themes**: Toggle between themes with persistent preferences
-- **Responsive Design**: Works seamlessly on mobile and desktop
-- **Sound Notifications**: Optional audio alerts for new messages
-- **Loading States**: Smooth skeleton loading for better UX
-- **Animations**: Subtle animations and transitions throughout
+### 🛡️ **Privacy-First Design**
+- **Approximate location** - Only geohash precision (~150m accuracy)
+- **No exact GPS storage** - Location data stays on device
+- **Anonymous users** - No personal information required
+- **Local conversations** - Community-based geographic boundaries
 
-## 🚀 Quick Start
+## 🛠 **Tech Stack**
 
-### Prerequisites
-- Node.js (v16 or higher)
-- Firebase CLI installed globally: `npm install -g firebase-tools`
-- A Firebase project with Firestore enabled
+### **Frontend**
+- **React 18** + TypeScript for type-safe UI components
+- **Vite** for fast development and optimized builds
+- **Leaflet** for professional interactive mapping
+- **CSS Modules** for scoped styling with design tokens
 
-### Installation
+### **Backend**
+- **Firebase Authentication** (anonymous users)
+- **Cloud Firestore** for real-time data synchronization
+- **Firebase Hosting** for fast global CDN delivery
+- **Firebase Functions** for server-side logic
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/blipz.git
-   cd blipz
-   ```
+### **Geospatial**
+- **Custom geohash implementation** for location encoding
+- **Viewport-based loading** for performance optimization
+- **Debounced queries** to prevent excessive database calls
+- **Distance calculations** for nearby room discovery
 
-2. **Configure Firebase**
-   - Create a new Firebase project at [Firebase Console](https://console.firebase.google.com)
-   - Enable Authentication (Anonymous sign-in method)
-   - Enable Cloud Firestore
-   - Copy your Firebase config
-
-3. **Update Firebase Configuration**
-   Edit `public/script.js` and replace the placeholder config:
-   ```javascript
-   const firebaseConfig = {
-     apiKey: "your-api-key",
-     authDomain: "your-project.firebaseapp.com",
-     projectId: "your-project-id",
-     storageBucket: "your-project.appspot.com",
-     messagingSenderId: "123456789",
-     appId: "your-app-id"
-   };
-   ```
-
-4. **Set up Firestore Security Rules**
-   Deploy the included security rules:
-   ```bash
-   firebase deploy --only firestore:rules
-   ```
-
-5. **Start the development server**
-   ```bash
-   firebase serve --only hosting
-   ```
-
-6. **Open your browser**
-   Navigate to `http://localhost:5000`
-
-## 🏗️ Project Structure
+## 📁 **Project Structure**
 
 ```
-blipz/
-├── public/                 # Frontend files
-│   ├── index.html         # Main HTML file
-│   ├── script.js          # Core application logic
-│   ├── style.css          # Modern CSS with theming
-│   └── libs/              # Custom libraries
-│       ├── ngeohash.js    # Geohash encoding/decoding
-│       └── emoji-picker-simple.js  # Custom emoji picker
-├── functions/             # Firebase Cloud Functions
-├── firestore.rules       # Firestore security rules
-├── firestore.indexes.json # Database indexes
-├── firebase.json         # Firebase configuration
-└── docs/                  # Project documentation
-    ├── CONTEXT.md         # Development context and history
-    ├── design-tokens.md   # Design tokens
-    └── roadmap.md         # Product roadmap (map-first, kid-safe, text-only)
+src/
+├── components/
+│   ├── Chat/                    # Chat room UI components
+│   │   ├── ChatRoom.tsx        # Main chat interface
+│   │   ├── ChatHeader.tsx      # Room header with back button
+│   │   ├── Message.tsx         # Individual message display
+│   │   ├── MessageList.tsx     # Scrollable message container
+│   │   ├── MessageComposer.tsx # Input area with emoji picker
+│   │   ├── EmojiPicker.tsx     # Emoji selection modal
+│   │   └── TypingIndicator.tsx # Shows when others are typing
+│   └── Landing/                # Landing page with map
+│       ├── LandingPage.tsx     # Main landing page layout
+│       ├── LeafletMap.tsx      # Interactive map with geohash grid
+│       ├── RoomCard.tsx        # Room list item display
+│       ├── UserControls.tsx    # Username editor and profile
+│       └── EnhancedGeohashInput.tsx # Join room by code input
+├── firebase/                   # Firebase integration
+│   ├── config.ts              # Firebase app initialization
+│   ├── auth.ts                # Authentication utilities
+│   ├── firestore.ts           # Database operations
+│   └── index.ts               # Exported Firebase functions
+├── hooks/                     # Custom React hooks
+│   ├── useAuth.ts             # Authentication state management
+│   ├── useLocation.ts         # GPS location handling
+│   ├── useRooms.ts            # Room discovery and joining
+│   ├── useMessages.ts         # Real-time message synchronization
+│   └── useMap.ts              # Map state and viewport management
+├── types/                     # TypeScript definitions
+│   ├── chat.ts                # Core app interfaces
+│   └── css-modules.d.ts       # CSS module type definitions
+├── utils/                     # Utility functions
+│   ├── geohash.ts             # Core geohash encoding/decoding
+│   ├── geohashGrid.ts         # Viewport grid calculations
+│   └── mockData.ts            # Demo room codes for quick join
+├── App.tsx                    # Main app routing and state
+└── main.tsx                   # React app entry point
+
+docs/                          # Project documentation
+├── GEOHASH_ROOM_SYSTEM.md    # Room system architecture
+├── LEAFLET_INTEGRATION.md    # Map integration details
+├── INTEGRATION_NOTES.md      # Development notes
+└── roadmap.md                # Future development plans
 ```
 
-## 🔧 Technology Stack
+## 🚀 **Development**
 
-- **Frontend**: Vanilla JavaScript, HTML5, CSS3
-- **Backend**: Firebase (Firestore, Authentication, Hosting)
-- **Location**: Geohash for privacy-preserving location approximation
-- **Real-time**: Firebase Firestore real-time listeners
-- **UI**: Custom CSS with CSS Grid, Flexbox, and CSS Custom Properties
+### **Prerequisites**
+- Node.js 18+ and npm
+- Firebase CLI for deployment
 
-## 🛡️ Privacy, Safety & Security
+### **Getting Started**
+```bash
+# Clone and install dependencies
+git clone <repository>
+cd Blipz
+npm install
 
-### Location Privacy
-- **No GPS Storage**: Exact coordinates never leave your device
-- **Geohash Approximation**: Only approximate location areas are used
-- **User Control**: Location updates can be disabled with privacy toggle
+# Start development server
+npm run dev
 
-### Data Security
-- **Anonymous Browsing + Account to Send (roadmap)**: Read rooms anonymously; sign in to post
-- **Firestore Rules**: Strict rules prevent unauthorized access and enforce write permissions
-- **Local Storage**: Minimal data stored locally (theme preferences, recent rooms)
+# Build for production
+npm run build
 
-### Message Privacy
-- **Ephemeral Messages**: Messages auto-delete after 24h (via Cloud Functions)
-- **Text‑Only**: No media uploads; messages are sanitized plain text
-- **Room-Based**: Messages are scoped to specific geographic chat rooms
+# Deploy to Firebase
+npm run deploy
+```
 
-### Family Safety (roadmap)
-- Stronger profanity filtering and link stripping/neutralization in kid‑safe mode
+### **Available Scripts**
+- `npm run dev` - Start Vite development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build locally
+- `npm run deploy` - Deploy to Firebase Hosting
+- `npm run deploy:all` - Deploy hosting + functions
 
-## 🎯 How It Works
+## 🔧 **Configuration**
 
-1. **Location Detection**: App requests approximate location via browser geolocation API
-2. **Geohash Conversion**: GPS coordinates are converted to geohash strings locally
-3. **Room Discovery**: Radius‑based search (today); map‑first geohash discovery (roadmap)
-4. **Join/Create**: Enter existing rooms or create new ones based on your geohash
-5. **Real-time Chat**: Exchange messages with others in the same approximate area
-6. **Ephemerality**: Messages auto‑delete after 24h; inactive rooms are deleted after 24h
+### **Firebase Setup**
+The app uses Firebase for backend services. Configuration is in `src/firebase/config.ts`:
 
-## 🚧 Development Roadmap
+```typescript
+const firebaseConfig = {
+  apiKey: "...",
+  authDomain: "blip-d93fe.firebaseapp.com",
+  projectId: "blip-d93fe",
+  // ... other config
+};
+```
 
-See `docs/roadmap.md` for the full, up‑to‑date plan and ordering (map‑first; auth/kid‑safe post‑MVP).
+### **Environment Variables**
+- Development builds connect to production Firebase
+- Location services work in browser with HTTPS
+- Map tiles served from OpenStreetMap CDN
 
-Near‑term highlights:
-- Map‑first landing page with geohash overlays and active‑room pop‑ups
-- Create/join rooms directly from the map
-- Text‑only chat with 24h TTL; Chats tab with cached recent rooms (24h)
-- Backend maintenance: inactive room deletion, indexes, presence consistency
-- Post‑MVP: account required to send; kid‑safe filters and compliance
+## 🎯 **How It Works**
 
-## 🤝 Contributing
+### **Room Discovery Flow**
+1. **User opens app** → Automatic anonymous authentication
+2. **Location requested** → Browser GPS permission (optional)
+3. **Map loads** → Shows geohash grid with nearby rooms
+4. **Room selection** → Click map regions or browse room list
+5. **Join/Create** → Existing rooms join instantly, empty regions create new
 
-We welcome contributions! Please see our contributing guidelines:
+### **Geohash System**
+- **6-character precision** → ~150m square regions
+- **One room per geohash** → No duplicate conversations per area
+- **Visual boundaries** → Map overlays show exact region borders
+- **Efficient queries** → Database indexed by geohash for fast lookups
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+### **Real-time Messaging**
+- **Firebase listeners** → Instant message delivery
+- **Ephemeral storage** → 24-hour auto-deletion
+- **Anonymous users** → No personal data required
+- **Typing indicators** → Live interaction feedback
 
-## 📝 License
+## 🌍 **Deployment**
+
+The app is deployed on Firebase Hosting with:
+- **Global CDN** → Fast loading worldwide
+- **SPA routing** → Client-side navigation
+- **Automatic builds** → Vite optimization pipeline
+- **Cache headers** → Efficient asset delivery
+
+## 📊 **Performance**
+
+- **Bundle size**: 841 kB (222 kB gzipped)
+- **Load time**: Sub-second on modern connections
+- **Map rendering**: 60fps smooth interactions
+- **Database queries**: Debounced and geographically bounded
+
+## 🔒 **Privacy & Security**
+
+- **Location privacy** → Only approximate geohash regions
+- **Anonymous authentication** → No personal data collection
+- **Ephemeral messages** → Automatic deletion after 24 hours
+- **Firestore security rules** → Server-side access control
+- **Client-side validation** → Input sanitization and rate limiting
+
+## 🤝 **Contributing**
+
+1. **Architecture** → Follow geohash-based room system
+2. **Components** → Use TypeScript and CSS Modules
+3. **Firebase** → Maintain real-time synchronization patterns
+4. **Privacy** → Keep location data approximate and ephemeral
+
+## 📝 **License**
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
-
-- **Issues**: Report bugs and request features via [GitHub Issues](https://github.com/your-username/blipz/issues)
-- **Discussions**: Join conversations in [GitHub Discussions](https://github.com/your-username/blipz/discussions)
-- **Documentation**: Check the [docs/](docs/) directory for detailed documentation
-
-## 🙏 Acknowledgments
-
-- Firebase for providing excellent real-time database and hosting services
-- The geohash algorithm for privacy-preserving location approximation
-- Inter and JetBrains Mono fonts for typography
-- The open-source community for inspiration and best practices
-
 ---
 
-**Built with ❤️ for privacy-conscious communication**
+**Blipz** - Connecting communities through location-based conversations while respecting privacy and promoting local engagement. 🌍✨

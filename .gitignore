@@ -3,12 +3,23 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+bun.lockb
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Vite
+.vite/
 
 # Firebase
 .firebase/
 firebase-debug.log
 firebase-debug.*.log
 .firebaserc
+firebase-export-*/
+firestore-export-*/
 
 # Environment variables
 .env
@@ -20,9 +31,11 @@ firebase-debug.*.log
 # IDE and Editor files
 .vscode/
 .idea/
+*.code-workspace
 *.swp
 *.swo
 *~
+.#*
 
 # OS generated files
 .DS_Store
@@ -76,8 +89,36 @@ test-results/
 *.test.js
 test_*.html
 test_*.js
+playwright-report/
+playwright/.cache/
+cypress/videos/
+cypress/screenshots/
 
 # Cache
 .cache/
+
+# Bundle analysis & Performance
+bundle-report.html
+stats.json
+lighthouse-report.html
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+*.temp
+
+# Local config overrides
+config.local.js
+firebase.local.json
+secrets.json
+
+# Map cache (if implementing offline maps)
+map-cache/
+tiles-cache/
+
+# Deployment
+.vercel/
+.netlify/
 
 .cursor/
