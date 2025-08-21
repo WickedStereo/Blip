@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Rectangle, useMap, useMapEvents } from 'react-leaflet';
 import L, { LatLngBounds } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -43,7 +43,7 @@ const MapEventHandler: React.FC<{
   return null;
 };
 
-// Component to handle map centering
+// Component to handle map centering with robust feedback loop prevention
 const MapCenterController: React.FC<{
   center: [number, number];
   zoom: number;
@@ -52,15 +52,43 @@ const MapCenterController: React.FC<{
   const [lastCenter, setLastCenter] = useState<[number, number]>(center);
   const [lastZoom, setLastZoom] = useState<number>(zoom);
   const [isSettingView, setIsSettingView] = useState(false);
+  const lastProgrammaticCenter = useRef<[number, number]>(center);
+  const lastProgrammaticZoom = useRef<number>(zoom);
 
   useEffect(() => {
-    // Use tolerance for coordinate comparison to prevent floating-point precision issues
-    const COORD_TOLERANCE = 0.00001; // About 1 meter precision
+    // Skip if we're currently setting the view to prevent feedback loops
+    if (isSettingView) {
+      return;
+    }
+
+    // Use zoom-dependent tolerance to handle precision issues at different scales
+    const BASE_TOLERANCE = 0.00001; // 1 meter precision at max zoom
+    const MAX_ZOOM = 18;
     const ZOOM_TOLERANCE = 0.1;
+    
+    // Calculate dynamic tolerance based on zoom level
+    // At lower zoom levels (world view), tolerance increases exponentially
+    const zoomFactor = Math.pow(2, Math.max(0, MAX_ZOOM - zoom));
+    const COORD_TOLERANCE = BASE_TOLERANCE * zoomFactor;
     
     const latDiff = Math.abs(center[0] - lastCenter[0]);
     const lngDiff = Math.abs(center[1] - lastCenter[1]);
     const zoomDiff = Math.abs(zoom - lastZoom);
+    
+    // Check if this change is likely from our own setView call
+    const isProgrammaticChange = (
+      Math.abs(center[0] - lastProgrammaticCenter.current[0]) < COORD_TOLERANCE &&
+      Math.abs(center[1] - lastProgrammaticCenter.current[1]) < COORD_TOLERANCE &&
+      Math.abs(zoom - lastProgrammaticZoom.current) < ZOOM_TOLERANCE
+    );
+    
+    // Skip programmatic changes to prevent feedback loops
+    if (isProgrammaticChange) {
+      console.log('MapCenterController: Skipping programmatic change');
+      setLastCenter(center);
+      setLastZoom(zoom);
+      return;
+    }
     
     const hasSignificantChange = (
       latDiff > COORD_TOLERANCE || 
@@ -68,15 +96,24 @@ const MapCenterController: React.FC<{
       zoomDiff > ZOOM_TOLERANCE
     );
 
-    // Only update if there's a significant change and we're not already setting the view
-    if (hasSignificantChange && !isSettingView) {
+    // Only update if there's a significant change
+    if (hasSignificantChange) {
+      console.log(`MapCenterController: Setting view with tolerance ${COORD_TOLERANCE.toFixed(8)} at zoom ${zoom} (lat diff: ${latDiff.toFixed(8)}, lng diff: ${lngDiff.toFixed(8)})`);
       setIsSettingView(true);
+      
+      // Store the coordinates we're about to set
+      lastProgrammaticCenter.current = center;
+      lastProgrammaticZoom.current = zoom;
+      
       map.setView(center, zoom, { animate: true, duration: 0.5 });
       setLastCenter(center);
       setLastZoom(zoom);
       
-      // Reset the flag after animation completes
-      setTimeout(() => setIsSettingView(false), 600);
+      // Reset the flag after a longer timeout to ensure animation is complete
+      setTimeout(() => {
+        setIsSettingView(false);
+        console.log('MapCenterController: Reset isSettingView flag');
+      }, 1000); // Increased timeout
     }
   }, [center, zoom, map, lastCenter, lastZoom, isSettingView]);
 
