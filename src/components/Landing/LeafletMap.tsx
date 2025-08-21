@@ -43,7 +43,7 @@ const MapEventHandler: React.FC<{
   return null;
 };
 
-// Component to handle map centering
+// Component to handle map centering - only for significant programmatic navigation
 const MapCenterController: React.FC<{
   center: [number, number];
   zoom: number;
@@ -53,11 +53,31 @@ const MapCenterController: React.FC<{
   const [lastZoom, setLastZoom] = useState<number>(zoom);
 
   useEffect(() => {
-    if (center[0] !== lastCenter[0] || center[1] !== lastCenter[1] || zoom !== lastZoom) {
+    // Use a large tolerance to only respond to significant programmatic changes
+    // This prevents interference with user dragging and zooming
+    const LARGE_COORD_TOLERANCE = 0.01; // About 1 kilometer
+    const ZOOM_TOLERANCE = 1; // Only for zoom level changes
+    
+    const latDiff = Math.abs(center[0] - lastCenter[0]);
+    const lngDiff = Math.abs(center[1] - lastCenter[1]);
+    const zoomDiff = Math.abs(zoom - lastZoom);
+    
+    const isSignificantChange = (
+      latDiff > LARGE_COORD_TOLERANCE || 
+      lngDiff > LARGE_COORD_TOLERANCE || 
+      zoomDiff > ZOOM_TOLERANCE
+    );
+
+    // Only update map view for significant programmatic changes (like "Go to location")
+    // Ignore small coordinate changes from user dragging to prevent feedback loops
+    if (isSignificantChange) {
+      console.log(`MapCenterController: Programmatic navigation detected (lat: ${latDiff.toFixed(6)}, lng: ${lngDiff.toFixed(6)}, zoom: ${zoomDiff.toFixed(1)})`);
       map.setView(center, zoom, { animate: true, duration: 0.5 });
-      setLastCenter(center);
-      setLastZoom(zoom);
     }
+    
+    // Always update last known coordinates for next comparison
+    setLastCenter(center);
+    setLastZoom(zoom);
   }, [center, zoom, map, lastCenter, lastZoom]);
 
   return null;
