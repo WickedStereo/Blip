@@ -66,42 +66,16 @@ export const useMap = (userLocation?: Location | null): UseMapResult => {
       west: leafletBounds.getWest()
     };
 
-    const newCenter = leafletBounds.getCenter();
-    
-    // Use zoom-dependent tolerance to handle precision issues at different scales
-    const BASE_TOLERANCE = 0.00001; // 1 meter precision at max zoom
-    const MAX_ZOOM = 18;
-    
-    // Calculate dynamic tolerance based on zoom level
-    const zoomFactor = Math.pow(2, Math.max(0, MAX_ZOOM - zoom));
-    const COORD_TOLERANCE = BASE_TOLERANCE * zoomFactor;
-    
-    // Only update center if it's significantly different to avoid feedback loops
-    setMapState(prev => {
-      const latDiff = Math.abs(newCenter.lat - prev.center[0]);
-      const lngDiff = Math.abs(newCenter.lng - prev.center[1]);
-      
-      const shouldUpdateCenter = (
-        latDiff > COORD_TOLERANCE ||
-        lngDiff > COORD_TOLERANCE
-      );
-
-      if (shouldUpdateCenter) {
-        console.log(`updateMapBounds: Updating center with tolerance ${COORD_TOLERANCE.toFixed(8)} at zoom ${zoom} (lat diff: ${latDiff.toFixed(8)}, lng diff: ${lngDiff.toFixed(8)})`);
-      }
-
-      return {
-        ...prev,
-        bounds,
-        zoom,
-        // Only update center if there's a significant change
-        center: shouldUpdateCenter ? [newCenter.lat, newCenter.lng] : prev.center
-      };
-    });
+    setMapState(prev => ({
+      ...prev,
+      bounds,
+      zoom,
+      center: [leafletBounds.getCenter().lat, leafletBounds.getCenter().lng]
+    }));
 
     // Update visible cells with debouncing
     debouncedUpdateCells(bounds, zoom);
-  }, [debouncedUpdateCells]); // Removed mapState.center dependency to prevent circular updates
+  }, [debouncedUpdateCells]);
 
   // Set user location and update map center
   const setUserLocation = useCallback((location: Location) => {
