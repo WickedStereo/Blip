@@ -51,14 +51,34 @@ const MapCenterController: React.FC<{
   const map = useMap();
   const [lastCenter, setLastCenter] = useState<[number, number]>(center);
   const [lastZoom, setLastZoom] = useState<number>(zoom);
+  const [isSettingView, setIsSettingView] = useState(false);
 
   useEffect(() => {
-    if (center[0] !== lastCenter[0] || center[1] !== lastCenter[1] || zoom !== lastZoom) {
+    // Use tolerance for coordinate comparison to prevent floating-point precision issues
+    const COORD_TOLERANCE = 0.00001; // About 1 meter precision
+    const ZOOM_TOLERANCE = 0.1;
+    
+    const latDiff = Math.abs(center[0] - lastCenter[0]);
+    const lngDiff = Math.abs(center[1] - lastCenter[1]);
+    const zoomDiff = Math.abs(zoom - lastZoom);
+    
+    const hasSignificantChange = (
+      latDiff > COORD_TOLERANCE || 
+      lngDiff > COORD_TOLERANCE || 
+      zoomDiff > ZOOM_TOLERANCE
+    );
+
+    // Only update if there's a significant change and we're not already setting the view
+    if (hasSignificantChange && !isSettingView) {
+      setIsSettingView(true);
       map.setView(center, zoom, { animate: true, duration: 0.5 });
       setLastCenter(center);
       setLastZoom(zoom);
+      
+      // Reset the flag after animation completes
+      setTimeout(() => setIsSettingView(false), 600);
     }
-  }, [center, zoom, map, lastCenter, lastZoom]);
+  }, [center, zoom, map, lastCenter, lastZoom, isSettingView]);
 
   return null;
 };

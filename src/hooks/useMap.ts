@@ -66,16 +66,26 @@ export const useMap = (userLocation?: Location | null): UseMapResult => {
       west: leafletBounds.getWest()
     };
 
+    const newCenter = leafletBounds.getCenter();
+    const COORD_TOLERANCE = 0.00001; // About 1 meter precision
+    
+    // Only update center if it's significantly different to avoid feedback loops
+    const shouldUpdateCenter = (
+      Math.abs(newCenter.lat - mapState.center[0]) > COORD_TOLERANCE ||
+      Math.abs(newCenter.lng - mapState.center[1]) > COORD_TOLERANCE
+    );
+
     setMapState(prev => ({
       ...prev,
       bounds,
       zoom,
-      center: [leafletBounds.getCenter().lat, leafletBounds.getCenter().lng]
+      // Only update center if there's a significant change
+      center: shouldUpdateCenter ? [newCenter.lat, newCenter.lng] : prev.center
     }));
 
     // Update visible cells with debouncing
     debouncedUpdateCells(bounds, zoom);
-  }, [debouncedUpdateCells]);
+  }, [debouncedUpdateCells, mapState.center]);
 
   // Set user location and update map center
   const setUserLocation = useCallback((location: Location) => {
